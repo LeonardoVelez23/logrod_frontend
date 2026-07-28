@@ -1,0 +1,66 @@
+<div class="app-container">
+  <!-- Navbar -->
+  <nav class="navbar glass-card">
+    <div class="navbar-left">
+      <div class="logo">
+        <span class="logo-icon">🍽️</span>
+        <span class="logo-text">LogrodResto</span>
+      </div>
+    </div>
+    
+    <div class="navbar-center" *ngIf="currentRole === 'cliente'">
+      <a routerLink="/catalog" routerLinkActive="active" class="nav-link">📋 Menú</a>
+      <a routerLink="/tracking" routerLinkActive="active" class="nav-link">🚚 Mi Pedido</a>
+    </div>
+
+    <div class="navbar-right">
+      <!-- Interactivo Selector de Roles para el Prototipo -->
+      <div class="role-selector">
+        <span class="role-label">Modo Vista:</span>
+        <select [ngModel]="currentRole" (change)="setRole($any($event.target).value)" class="role-select">
+          <option value="cliente">Cliente (Estudiante/Docente)</option>
+          <option value="empleado">Empleado (Cocina/Entrega)</option>
+          <option value="admin">Administrador</option>
+        </select>
+      </div>
+
+      <div class="user-profile">
+        <div class="avatar">{{ currentRole[0].toUpperCase() }}</div>
+        <button (click)="logout()" class="btn-logout" title="Cerrar sesión">🚪</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Body -->
+  <div class="main-body">
+    <!-- Sidebar for admin / employee -->
+    <aside class="sidebar glass-card" *ngIf="currentRole === 'admin' || currentRole === 'empleado'">
+      <div class="sidebar-header">
+        <h3>Panel {{ currentRole === 'admin' ? 'Admin' : 'Empleado' }}</h3>
+      </div>
+      <ul class="sidebar-menu">
+        <li>
+          <a routerLink="/admin/dashboard" routerLinkActive="active" class="sidebar-link">
+            <span>📊</span> Dashboard
+          </a>
+        </li>
+        <li>
+          <a routerLink="/admin/orders" routerLinkActive="active" class="sidebar-link">
+            <span>📦</span> Gestión de Pedidos
+          </a>
+        </li>
+        <!-- Only Admin can manage catalog -->
+        <li *ngIf="currentRole === 'admin'">
+          <a routerLink="/admin/products" routerLinkActive="active" class="sidebar-link">
+            <span>🍔</span> Catálogo de Productos
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="content-area" [class.no-sidebar]="currentRole === 'cliente'">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
