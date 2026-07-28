@@ -8,12 +8,12 @@ import { Products } from './views/admin/products/products.component';
 import { Orders } from './views/admin/orders/orders.component';
 
 export const routes: Routes = [
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: Login },
   {
     path: '',
     component: MainLayout,
     children: [
-      { path: '', redirectTo: 'catalog', pathMatch: 'full' },
       { path: 'catalog', component: Catalog },
       { path: 'tracking', component: Tracking },
       { path: 'admin/dashboard', component: Dashboard },
@@ -21,5 +21,5 @@ export const routes: Routes = [
       { path: 'admin/orders', component: Orders }
     ]
   },
-  { path: '**', redirectTo: 'catalog' }
+  { path: '**', redirectTo: 'login' }
 ];
