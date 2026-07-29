@@ -18,6 +18,10 @@
         />
       </div>
       
+      <button class="btn btn-primary create-order-btn" (click)="openCreateModal()" title="Registrar un nuevo pedido">
+        <i class="bi bi-plus-lg"></i> + Nuevo Pedido
+      </button>
+
       <button class="btn btn-secondary refresh-btn" (click)="loadPedidos()" title="Recargar pedidos">
         <i class="bi bi-arrow-clockwise"></i> Recargar
       </button>
@@ -362,6 +366,111 @@
           (click)="entregarPedido(selectedPedido)"
         >
           Entregar Pedido <i class="bi bi-arrow-right-short"></i>
+        </button>
+      </div>
+    </div>
+  <!-- Modal de Registrar Nuevo Pedido -->
+  <div class="modal-backdrop" *ngIf="showCreateModal">
+    <div class="glass-card detail-modal create-modal animate-fade-in">
+      <div class="modal-header">
+        <h3>📝 Registrar Nuevo Pedido</h3>
+        <button class="close-btn" (click)="closeCreateModal()">&times;</button>
+      </div>
+
+      <div class="modal-body custom-scrollbar">
+        <!-- Selección de Cliente y Modalidad -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label font-semibold text-sm mb-1">Cliente</label>
+            <select [(ngModel)]="newOrderClienteId" class="form-control">
+              <option *ngIf="clientes.length === 0" [ngValue]="null">No hay clientes registrados</option>
+              <option *ngFor="let c of clientes" [value]="c.id">
+                {{ c.nombres }} {{ c.apellidos }} (DNI: {{ c.identificacion }})
+              </option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label font-semibold text-sm mb-1">Modalidad de Servicio</label>
+            <select [(ngModel)]="newOrderModalidad" class="form-control">
+              <option value="presencial">🍽️ COMEDOR (Presencial)</option>
+              <option value="en línea">🛍️ PARA LLEVAR (En línea)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Selección y Adición de Productos -->
+        <div class="info-section mb-4">
+          <h4 class="section-title">🍔 Seleccionar Productos</h4>
+          <div class="row g-2 align-items-end mb-3">
+            <div class="col-md-7">
+              <label class="form-label text-xs mb-1">Producto disponible</label>
+              <select [(ngModel)]="selectedProductId" class="form-control">
+                <option *ngIf="productosDisponibles.length === 0" [ngValue]="null">No hay productos disponibles con stock</option>
+                <option *ngFor="let p of productosDisponibles" [value]="p.id">
+                  {{ p.nombre }} - ${{ p.precio | number:'1.2-2' }} (Stock: {{ p.cantidad_disponible }})
+                </option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label text-xs mb-1">Cantidad</label>
+              <input type="number" [(ngModel)]="selectedQuantity" min="1" max="50" class="form-control" />
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-primary w-100" (click)="addItemToNewOrder()">
+                + Agregar
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabla de Productos Seleccionados en el Borrador -->
+          <div class="products-table-wrapper">
+            <table class="products-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th class="text-center">Cant.</th>
+                  <th class="text-end">Precio U.</th>
+                  <th class="text-end">Subtotal</th>
+                  <th class="text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of newOrderItems; let i = index">
+                  <td>{{ item.producto.nombre }}</td>
+                  <td class="text-center">{{ item.cantidad }}</td>
+                  <td class="text-end">${{ item.precio_unitario | number:'1.2-2' }}</td>
+                  <td class="text-end">${{ item.subtotal | number:'1.2-2' }}</td>
+                  <td class="text-center">
+                    <button class="btn-remove-item" (click)="removeItemFromNewOrder(i)" title="Eliminar ítem">
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="newOrderItems.length === 0">
+                  <td colspan="5" class="text-center text-muted py-3">
+                    No se han agregado productos al pedido aún.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="order-total-bar mt-3">
+            <span>Total del Pedido</span>
+            <span class="total-price">${{ getNewOrderTotal() | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeCreateModal()">Cancelar</button>
+        <button 
+          class="btn btn-primary" 
+          [disabled]="isSubmittingOrder || newOrderItems.length === 0 || !newOrderClienteId"
+          (click)="guardarNuevoPedido()"
+        >
+          <span *ngIf="!isSubmittingOrder">💾 Registrar Pedido</span>
+          <span *ngIf="isSubmittingOrder">Guardando...</span>
         </button>
       </div>
     </div>

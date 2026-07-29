@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrderService, Pedido } from '../../../services/order.service';
 import { EmployeeService, Empleado } from '../../../services/employee.service';
+import { ClientService, Cliente } from '../../../services/client.service';
+import { ProductService, Producto } from '../../../services/product.service';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
@@ -15,14 +17,33 @@ import { AuthService } from '../../../services/auth.service';
 export class OrdersComponent implements OnInit {
   private orderService = inject(OrderService);
   private employeeService = inject(EmployeeService);
-  private authService = inject(AuthService);
+  private clientService = inject(ClientService);
+  private productService = inject(ProductService);
+  public authService = inject(AuthService);
 
   pedidos: Pedido[] = [];
   empleados: Empleado[] = [];
+  clientes: Cliente[] = [];
+  productosDisponibles: Producto[] = [];
   searchTerm: string = '';
   
   selectedPedido: Pedido | null = null;
   showDetailModal: boolean = false;
+
+  // Control del Modal de Creación de Pedido
+  showCreateModal: boolean = false;
+  isSubmittingOrder: boolean = false;
+  newOrderClienteId: number | null = null;
+  newOrderModalidad: 'presencial' | 'en línea' = 'presencial';
+  selectedProductId: number | null = null;
+  selectedQuantity: number = 1;
+  newOrderItems: Array<{
+    producto_id: number;
+    producto: Producto;
+    cantidad: number;
+    precio_unitario: number;
+    subtotal: number;
+  }> = [];
   
   // Para registrar un timer que actualice los minutos transcurridos en tiempo real
   private timerId: any;
@@ -240,6 +261,156 @@ export class OrdersComponent implements OnInit {
     const mins = this.getMinutosTranscurridos(createdAt);
     const target = 20; // 20 minutos es el objetivo
     return Math.min(100, Math.round((mins / target) * 100));
+  }
+
+  // --- Lógica del Modal para Crear Nuevo Pedido (Empleado / Admin) ---
+  openCreateModal() {
+    this.newOrderClienteId = null;
+    this.newOrderModalidad = 'presencial';
+    this.selectedProductId = null;
+    this.selectedQuantity = 1;
+    this.newOrderItems = [];
+    this.isSubmittingOrder = false;
+
+    // Cargar Lista de Clientes
+    this.clientService.getClientes().subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.clientes = res.data;
+          if (this.clientes.length > 0) {
+            this.newOrderClienteId = this.clientes[0].id;
+          }
+        }
+      },
+      error: (err) => console.error('Error al cargar clientes:', err)
+    });
+
+    // Cargar Lista de Productos Disponibles
+    this.productService.getProductos().subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.productosDisponibles = res.data.filter(p => p.estado === 'disponible' && p.cantidad_disponible > 0);
+          if (this.productosDisponibles.length > 0 && this.productosDisponibles[0].id) {
+            this.selectedProductId = this.productosDisponibles[0].id;
+          }
+        }
+      },
+      error: (err) => console.error('Error al cargar productos:', err)
+    });
+
+    this.showCreateModal = true;
+  }
+
+  closeCreateModal() {
+    this.showCreateModal = false;
+  }
+
+  addItemToNewOrder() {
+    if (!this.selectedProductId) {
+      alert('Seleccione un producto.');
+      return;
+    }
+    if (this.selectedQuantity < 1) {
+      alert('La cantidad debe ser al menos 1.');
+      return;
+    }
+
+    const producto = this.productosDisponibles.find(p => p.id === Number(this.selectedProductId));
+    if (!producto || !producto.id) {
+      alert('Producto no válido.');
+      return;
+    }
+
+    if (this.selectedQuantity > producto.cantidad_disponible) {
+      alert(`La cantidad excede el stock disponible (${producto.cantidad_disponible}).`);
+      return;
+    }
+
+    const indexExistente = this.newOrderItems.findIndex(item => item.producto_id === producto.id);
+    const precioUnitario = Number(producto.precio);
+
+    if (indexExistente !== -1) {
+      const nuevaCantidad = this.newOrderItems[indexExistente].cantidad + Number(this.selectedQuantity);
+      if (nuevaCantidad > producto.cantidad_disponible) {
+        alert(`La cantidad total en el pedido (${nuevaCantidad}) excede el stock disponible (${producto.cantidad_disponible}).`);
+        return;
+      }
+      this.newOrderItems[indexExistente].cantidad = nuevaCantidad;
+      this.newOrderItems[indexExistente].subtotal = nuevaCantidad * precioUnitario;
+    } else {
+      const cant = Number(this.selectedQuantity);
+      this.newOrderItems.push({
+        producto_id: producto.id,
+        producto,
+        cantidad: cant,
+        precio_unitario: precioUnitario,
+        subtotal: cant * precioUnitario
+      });
+    }
+
+    this.selectedQuantity = 1;
+  }
+
+  removeItemFromNewOrder(index: number) {
+    this.newOrderItems.splice(index, 1);
+  }
+
+  getNewOrderTotal(): number {
+    return this.newOrderItems.reduce((acc, item) => acc + item.subtotal, 0);
+  }
+
+  guardarNuevoPedido() {
+    if (!this.newOrderClienteId) {
+      alert('Debe seleccionar un cliente.');
+      return;
+    }
+    if (this.newOrderItems.length === 0) {
+      alert('Debe agregar al menos un producto al pedido.');
+      return;
+    }
+
+    this.isSubmittingOrder = true;
+    const now = new Date();
+    const fechaStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const horaStr = now.toTimeString().split(' ')[0];  // HH:MM:SS
+
+    const currentUser = this.authService.currentUser();
+    let empleadoId: number | undefined = undefined;
+    if (currentUser && (currentUser.rol === 'empleado' || currentUser.rol === 'admin')) {
+      empleadoId = currentUser.id;
+    }
+
+    const payload = {
+      fecha: fechaStr,
+      hora: horaStr,
+      modalidad: this.newOrderModalidad,
+      cliente_id: Number(this.newOrderClienteId),
+      empleado_id: empleadoId,
+      estado: 'solicitado' as const,
+      valor_total: this.getNewOrderTotal(),
+      detalles: this.newOrderItems.map(item => ({
+        producto_id: item.producto_id,
+        cantidad: item.cantidad,
+        precio_unitario: item.precio_unitario,
+        subtotal: item.subtotal
+      }))
+    };
+
+    this.orderService.createPedido(payload).subscribe({
+      next: (res) => {
+        this.isSubmittingOrder = false;
+        if (res.success) {
+          alert('¡Pedido registrado con éxito!');
+          this.closeCreateModal();
+          this.loadPedidos();
+        }
+      },
+      error: (err) => {
+        this.isSubmittingOrder = false;
+        console.error('Error al registrar pedido:', err);
+        alert('Error al registrar el pedido: ' + (err.error?.message || err.message));
+      }
+    });
   }
 }
 export { OrdersComponent as Orders };
