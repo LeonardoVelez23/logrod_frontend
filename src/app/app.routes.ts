@@ -6,20 +6,34 @@ import { Tracking } from './views/tracking/tracking.component';
 import { Dashboard } from './views/admin/dashboard/dashboard.component';
 import { Products } from './views/admin/products/products.component';
 import { Orders } from './views/admin/orders/orders.component';
+import { authGuard, roleGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: Login },
   {
     path: '',
     component: MainLayout,
+    canActivate: [authGuard],
     children: [
+      { path: '', redirectTo: 'catalog', pathMatch: 'full' },
       { path: 'catalog', component: Catalog },
       { path: 'tracking', component: Tracking },
-      { path: 'admin/dashboard', component: Dashboard },
-      { path: 'admin/products', component: Products },
-      { path: 'admin/orders', component: Orders }
+      { 
+        path: 'admin/dashboard', 
+        component: Dashboard, 
+        canActivate: [roleGuard(['admin', 'empleado'])] 
+      },
+      { 
+        path: 'admin/products', 
+        component: Products, 
+        canActivate: [roleGuard(['admin'])] 
+      },
+      { 
+        path: 'admin/orders', 
+        component: Orders, 
+        canActivate: [roleGuard(['admin', 'empleado'])] 
+      }
     ]
   },
-  { path: '**', redirectTo: 'login' }
+  { path: '**', redirectTo: 'catalog' }
 ];
