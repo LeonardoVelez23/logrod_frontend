@@ -1,1 +1,230 @@
-<p>Dashboard works</p>
+<div class="dashboard-container animate-fade-in">
+  <!-- Cabecera del Dashboard -->
+  <div class="view-header">
+    <div>
+      <h2>Panel de Control</h2>
+      <p>Métricas generales y estado de ventas en tiempo real.</p>
+    </div>
+    <button class="btn btn-secondary" (click)="loadData()">
+      <i class="bi bi-arrow-clockwise"></i> Actualizar
+    </button>
+  </div>
+
+  <!-- Rejilla de KPIs -->
+  <div class="kpi-grid">
+    <!-- KPI 1: Ventas -->
+    <div class="glass-card kpi-card card-sales">
+      <div class="kpi-icon">
+        <i class="bi bi-currency-dollar"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Ganancias Totales</span>
+        <h3 class="kpi-value">${{ totalSales | number:'1.2-2' }}</h3>
+        <span class="kpi-subtext text-success">Pedidos entregados</span>
+      </div>
+    </div>
+
+    <!-- KPI 2: Pedidos -->
+    <div class="glass-card kpi-card card-orders">
+      <div class="kpi-icon">
+        <i class="bi bi-receipt"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Volumen de Pedidos</span>
+        <h3 class="kpi-value">{{ totalOrdersCount }}</h3>
+        <span class="kpi-subtext">Historial acumulado</span>
+      </div>
+    </div>
+
+    <!-- KPI 3: Pendientes -->
+    <div class="glass-card kpi-card card-pending">
+      <div class="kpi-icon">
+        <i class="bi bi-hourglass-split"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">En Cola de Espera</span>
+        <h3 class="kpi-value">{{ pendingOrdersCount }}</h3>
+        <span class="kpi-subtext text-warning">Pedidos activos</span>
+      </div>
+    </div>
+
+    <!-- KPI 4: Productos -->
+    <div class="glass-card kpi-card card-products">
+      <div class="kpi-icon">
+        <i class="bi bi-egg-fried"></i>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Productos Activos</span>
+        <h3 class="kpi-value">{{ totalProductsCount }}</h3>
+        <span class="kpi-subtext">En el catálogo</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de Distribución y Métricas Visuales -->
+  <div class="charts-row">
+    <!-- Modalidad de Pedidos -->
+    <div class="glass-card chart-card">
+      <h3 class="card-title"><i class="bi bi-pie-chart-fill"></i> Modalidad de Pedidos</h3>
+      
+      <div class="modality-stats">
+        <div class="stat-item">
+          <div class="stat-header">
+            <span>Comedor (Presencial)</span>
+            <strong>{{ presencialCount }} ({{ getPercent(presencialCount, totalOrdersCount) }}%)</strong>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill bg-info" [style.width.%]="getPercent(presencialCount, totalOrdersCount)"></div>
+          </div>
+        </div>
+
+        <div class="stat-item">
+          <div class="stat-header">
+            <span>Para Llevar (En Línea)</span>
+            <strong>{{ enLineaCount }} ({{ getPercent(enLineaCount, totalOrdersCount) }}%)</strong>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill bg-warning" [style.width.%]="getPercent(enLineaCount, totalOrdersCount)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modality-summary">
+        <div class="summary-box">
+          <span class="box-num">{{ presencialCount }}</span>
+          <span class="box-lbl">Presenciales</span>
+        </div>
+        <div class="summary-box">
+          <span class="box-num">{{ enLineaCount }}</span>
+          <span class="box-lbl">Virtuales</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desglose por Estado -->
+    <div class="glass-card chart-card">
+      <h3 class="card-title"><i class="bi bi-bar-chart-steps"></i> Distribución de Estados</h3>
+      
+      <div class="status-bars-list">
+        <!-- Solicitados -->
+        <div class="status-bar-item">
+          <div class="status-bar-info">
+            <span class="badge badge-warning">Solicitados</span>
+            <span>{{ statusCounts.solicitado }}</span>
+          </div>
+          <div class="bar-track-sm">
+            <div class="bar-fill bg-warning" [style.width.%]="getPercent(statusCounts.solicitado, totalOrdersCount)"></div>
+          </div>
+        </div>
+
+        <!-- Confirmados -->
+        <div class="status-bar-item">
+          <div class="status-bar-info">
+            <span class="badge bg-primary text-white">Confirmados</span>
+            <span>{{ statusCounts.confirmado }}</span>
+          </div>
+          <div class="bar-track-sm">
+            <div class="bar-fill bg-primary" [style.width.%]="getPercent(statusCounts.confirmado, totalOrdersCount)"></div>
+          </div>
+        </div>
+
+        <!-- En Preparación -->
+        <div class="status-bar-item">
+          <div class="status-bar-info">
+            <span class="badge badge-info">En Preparación</span>
+            <span>{{ statusCounts.en_preparacion }}</span>
+          </div>
+          <div class="bar-track-sm">
+            <div class="bar-fill bg-info" [style.width.%]="getPercent(statusCounts.en_preparacion, totalOrdersCount)"></div>
+          </div>
+        </div>
+
+        <!-- Listos -->
+        <div class="status-bar-item">
+          <div class="status-bar-info">
+            <span class="badge badge-success">Listos</span>
+            <span>{{ statusCounts.listo }}</span>
+          </div>
+          <div class="bar-track-sm">
+            <div class="bar-fill bg-success" [style.width.%]="getPercent(statusCounts.listo, totalOrdersCount)"></div>
+          </div>
+        </div>
+
+        <!-- Entregados -->
+        <div class="status-bar-item">
+          <div class="status-bar-info">
+            <span class="badge badge-secondary">Entregados</span>
+            <span>{{ statusCounts.entregado }}</span>
+          </div>
+          <div class="bar-track-sm">
+            <div class="bar-fill bg-secondary" [style.width.%]="getPercent(statusCounts.entregado, totalOrdersCount)"></div>
+          </div>
+        </div>
+
+        <!-- Cancelados -->
+        <div class="status-bar-item">
+          <div class="status-bar-info">
+            <span class="badge badge-danger">Cancelados</span>
+            <span>{{ statusCounts.cancelado }}</span>
+          </div>
+          <div class="bar-track-sm">
+            <div class="bar-fill bg-danger" [style.width.%]="getPercent(statusCounts.cancelado, totalOrdersCount)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección: Pedidos Recientes -->
+  <div class="glass-card recent-orders-card">
+    <div class="card-header">
+      <h3 class="card-title"><i class="bi bi-clock-history"></i> Actividad Reciente</h3>
+      <span class="subtitle">Últimos 5 pedidos registrados</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="recent-orders-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Fecha / Hora</th>
+            <th>Modalidad</th>
+            <th class="text-end">Total</th>
+            <th class="text-center">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let pedido of recentOrders" class="order-row">
+            <td><strong>#{{ pedido.id }}</strong></td>
+            <td>{{ pedido.cliente?.nombres }} {{ pedido.cliente?.apellidos }}</td>
+            <td>{{ pedido.fecha }} <span class="text-secondary-text">{{ pedido.hora }}</span></td>
+            <td>
+              <span class="badge" [ngClass]="pedido.modalidad === 'presencial' ? 'badge-info' : 'badge-warning'">
+                {{ pedido.modalidad }}
+              </span>
+            </td>
+            <td class="text-end font-semibold">${{ pedido.valor_total | number:'1.2-2' }}</td>
+            <td class="text-center">
+              <span class="badge" [ngClass]="{
+                'badge-warning': pedido.estado === 'solicitado' || pedido.estado === 'confirmado',
+                'badge-info': pedido.estado === 'en preparación',
+                'badge-success': pedido.estado === 'listo',
+                'badge-danger': pedido.estado === 'cancelado',
+                'badge-secondary': pedido.estado === 'entregado'
+              }">
+                {{ pedido.estado }}
+              </span>
+            </td>
+          </tr>
+
+          <tr *ngIf="recentOrders.length === 0">
+            <td colspan="6" class="text-center py-4 text-muted">
+              No se han registrado pedidos en el sistema.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
