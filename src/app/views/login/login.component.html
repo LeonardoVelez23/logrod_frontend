@@ -68,6 +68,12 @@
               <p class="text-secondary small">Por favor, ingrese sus credenciales para continuar.</p>
             </div>
 
+            <!-- Alerta para mensajes de error de la API -->
+            <div *ngIf="errorMessage()" class="alert alert-danger p-2 mb-3 small border-0 rounded-3 text-center d-flex align-items-center justify-content-center gap-2" role="alert">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <span>{{ errorMessage() }}</span>
+            </div>
+
             <!-- Email / ID Input -->
             <div class="mb-3">
               <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider" for="email">Correo Electrónico / ID</label>
@@ -146,6 +152,12 @@
             <div class="mb-4">
               <h2 class="h3 fw-bold text-dark mb-1">Crea tu cuenta</h2>
               <p class="text-secondary small">Ingresa tus datos para registrarte en el sistema.</p>
+            </div>
+
+            <!-- Alerta para mensajes de error de la API -->
+            <div *ngIf="errorMessage()" class="alert alert-danger p-2 mb-3 small border-0 rounded-3 text-center d-flex align-items-center justify-content-center gap-2" role="alert">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <span>{{ errorMessage() }}</span>
             </div>
 
             <div class="row g-2">
