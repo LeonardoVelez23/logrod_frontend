@@ -24,8 +24,12 @@
         </select>
       </div>
 
-      <div class="user-profile">
-        <div class="avatar">{{ currentRole[0].toUpperCase() }}</div>
+      <div class="user-profile" *ngIf="currentUser">
+        <div class="user-info d-none d-md-flex flex-column text-end me-2 align-items-end" style="line-height: 1.2;">
+          <span class="fw-semibold text-dark" style="font-size: 0.85rem;">{{ currentUser.nombres }} {{ currentUser.apellidos }}</span>
+          <span class="text-secondary text-uppercase" style="font-size: 0.7rem;">{{ currentUser.rol }}</span>
+        </div>
+        <div class="avatar" [title]="currentUser.correo_electronico">{{ userInitials }}</div>
         <button (click)="logout()" class="btn-logout" title="Cerrar sesión">🚪</button>
       </div>
     </div>
