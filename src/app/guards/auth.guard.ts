@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 
-// Helper to decode JWT payload safely in Angular (including SSR checks)
+// Función auxiliar para decodificar la carga útil (payload) del JWT de forma segura en Angular (evitando fallos de SSR)
 function decodeToken(token: string): any {
   try {
     if (typeof window === 'undefined') return null;
@@ -12,7 +12,7 @@ function decodeToken(token: string): any {
   }
 }
 
-// Auth Guard: Verifies the user is logged in
+// Auth Guard: Verifica si el usuario ha iniciado sesión
 export const authGuard: CanActivateFn = (route, state) => {
   const router = inject(Router);
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -21,12 +21,12 @@ export const authGuard: CanActivateFn = (route, state) => {
     return true;
   }
 
-  // Redirect to login if not authenticated
+  // Redirigir al login si no está autenticado
   router.navigate(['/login']);
   return false;
 };
 
-// Role Guard: Verifies the user has one of the allowed roles
+// Role Guard: Verifica si el usuario tiene uno de los roles permitidos
 export const roleGuard: (allowedRoles: string[]) => CanActivateFn = (allowedRoles) => {
   return (route, state) => {
     const router = inject(Router);
@@ -44,7 +44,7 @@ export const roleGuard: (allowedRoles: string[]) => CanActivateFn = (allowedRole
       return true;
     }
 
-    // Redirect to home/catalog if unauthorized
+    // Redirigir al catálogo si no está autorizado
     alert('No tienes permisos para acceder a esta sección.');
     router.navigate(['/catalog']);
     return false;

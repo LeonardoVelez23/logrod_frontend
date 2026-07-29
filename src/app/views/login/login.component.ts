@@ -1,8 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MainLayout } from '../main-layout/main-layout.component';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -12,19 +13,25 @@ import { MainLayout } from '../main-layout/main-layout.component';
   styleUrl: './login.component.css'
 })
 export class LoginComponent {
-  // Toggle between Login and Register tabs
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
+  // Controlar el cambio de pestaña (Login / Registro)
   isLoginMode = signal(true);
   
-  // Toggle password visibility
+  // Controlar la visibilidad de la contraseña
   showPassword = signal(false);
 
-  // Login form models (No role selection, detected by backend)
+  // Almacenar mensajes de error de la API
+  errorMessage = signal<string | null>(null);
+
+  // Modelo de datos para iniciar sesión
   loginData = {
     email: '',
     password: ''
   };
 
-  // Register form models
+  // Modelo de datos para crear cuenta de cliente
   registerData = {
     identificacion: '',
     nombres: '',
@@ -32,33 +39,77 @@ export class LoginComponent {
     correo_electronico: '',
     telefono: '',
     contrasenia: '',
-    confirmarContrasenia: ''
+    confirmarContrasenia: '',
+    tipo_cliente: 'estudiante' // Por defecto
   };
 
-  constructor(private router: Router) {}
-
+  // Alternar entre login y registro
   toggleMode(login: boolean) {
     this.isLoginMode.set(login);
+    this.errorMessage.set(null); // Limpiar errores al cambiar
   }
 
+  // Alternar visualización del campo de contraseña
   togglePasswordVisibility() {
     this.showPassword.update(val => !val);
   }
 
+  // Enviar formulario de inicio de sesión al backend
   onLoginSubmit() {
-    console.log('Iniciando sesión...', this.loginData);
-    
-    // Default role simulation (backend will detect role based on credentials)
-    MainLayout.userRole.set('cliente');
-    this.router.navigate(['/catalog']);
+    this.errorMessage.set(null);
+
+    this.authService.login(this.loginData).subscribe({
+      next: (response) => {
+        if (response.success) {
+          // Asignar el rol global en el MainLayout para la barra de navegación
+          MainLayout.userRole.set(response.user.rol);
+          
+          // Redirigir según el rol del usuario de la base de datos
+          if (response.user.rol === 'cliente') {
+            this.router.navigate(['/catalog']);
+          } else {
+            this.router.navigate(['/admin/dashboard']);
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Error de login:', err);
+        this.errorMessage.set(
+          err.error?.message || 'Error al iniciar sesión. Verifique sus credenciales.'
+        );
+      }
+    });
   }
 
+  // Enviar formulario de registro de cliente al backend
   onRegisterSubmit() {
-    console.log('Registrando usuario...', this.registerData);
-    
-    alert('¡Registro exitoso! Ahora puedes iniciar sesión con tus credenciales.');
-    this.isLoginMode.set(true);
-    this.loginData.email = this.registerData.correo_electronico;
+    this.errorMessage.set(null);
+
+    // Validar que las contraseñas coincidan antes de enviar
+    if (this.registerData.contrasenia !== this.registerData.confirmarContrasenia) {
+      this.errorMessage.set('Las contraseñas no coinciden.');
+      return;
+    }
+
+    // Desestructurar para omitir confirmarContrasenia
+    const { confirmarContrasenia, ...clientPayload } = this.registerData;
+
+    this.authService.register(clientPayload).subscribe({
+      next: (response) => {
+        if (response.success) {
+          alert('¡Registro exitoso! Ahora puedes iniciar sesión con tus credenciales.');
+          this.isLoginMode.set(true);
+          this.loginData.email = this.registerData.correo_electronico;
+          this.errorMessage.set(null);
+        }
+      },
+      error: (err) => {
+        console.error('Error de registro:', err);
+        this.errorMessage.set(
+          err.error?.message || 'Error al registrar la cuenta. Intente nuevamente.'
+        );
+      }
+    });
   }
 }
 export { LoginComponent as Login };
