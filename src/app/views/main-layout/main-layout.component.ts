@@ -47,22 +47,6 @@ export class MainLayoutComponent {
     return MainLayoutComponent.userRole();
   }
 
-  // Cambiar dinámicamente de rol (útil para pruebas y evaluación del docente)
-  setRole(role: 'cliente' | 'empleado' | 'admin') {
-    MainLayoutComponent.userRole.set(role);
-    
-    // Actualizar también el rol del usuario activo en el servicio
-    const user = this.authService.currentUser();
-    if (user) {
-      this.authService.currentUser.set({ ...user, rol: role });
-    }
-
-    if (role === 'cliente') {
-      this.router.navigate(['/catalog']);
-    } else {
-      this.router.navigate(['/admin/dashboard']);
-    }
-  }
 
   // Cerrar sesión limpiando el almacenamiento local
   logout() {

@@ -14,15 +14,6 @@
     </div>
 
     <div class="navbar-right">
-      <!-- Interactivo Selector de Roles para el Prototipo -->
-      <div class="role-selector">
-        <span class="role-label">Modo Vista:</span>
-        <select [ngModel]="currentRole" (change)="setRole($any($event.target).value)" class="role-select">
-          <option value="cliente">Cliente (Estudiante/Docente)</option>
-          <option value="empleado">Empleado (Cocina/Entrega)</option>
-          <option value="admin">Administrador</option>
-        </select>
-      </div>
 
       <div class="user-profile" *ngIf="currentUser">
         <div class="user-info d-none d-md-flex flex-column text-end me-2 align-items-end" style="line-height: 1.2;">

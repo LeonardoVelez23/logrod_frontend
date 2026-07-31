@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService, Producto, Categoria } from '../../../services/product.service';
@@ -12,11 +12,12 @@ import { ProductService, Producto, Categoria } from '../../../services/product.s
 })
 export class ProductsComponent implements OnInit {
   private productService = inject(ProductService);
+  private cdr = inject(ChangeDetectorRef); // Inyectar ChangeDetectorRef para forzar actualización de la UI
 
   productos: Producto[] = [];
   categorias: Categoria[] = [];
 
-  // Filtros
+  // Filtros de búsqueda
   searchTerm: string = '';
   selectedCategoriaId: string = '';
   selectedEstado: string = '';
@@ -41,11 +42,13 @@ export class ProductsComponent implements OnInit {
     this.loadCategorias();
   }
 
+  // Cargar lista de productos del servidor
   loadProductos() {
     this.productService.getProductos().subscribe({
       next: (response) => {
         if (response.success) {
           this.productos = response.data;
+          this.cdr.detectChanges(); // Forzar renderizado
         }
       },
       error: (err) => {
@@ -54,11 +57,13 @@ export class ProductsComponent implements OnInit {
     });
   }
 
+  // Cargar categorías del servidor
   loadCategorias() {
     this.productService.getCategorias().subscribe({
       next: (response) => {
         if (response.success) {
           this.categorias = response.data;
+          this.cdr.detectChanges(); // Forzar renderizado
         }
       },
       error: (err) => {
@@ -67,7 +72,7 @@ export class ProductsComponent implements OnInit {
     });
   }
 
-  // Filtrar la lista de productos localmente
+  // Filtrar la lista de productos localmente según los filtros seleccionados
   getProductosFiltrados(): Producto[] {
     return this.productos.filter(prod => {
       const matchSearch = !this.searchTerm.trim() ||
@@ -84,7 +89,7 @@ export class ProductsComponent implements OnInit {
     });
   }
 
-  // Abrir modal para agregar
+  // Abrir modal en modo creación
   openAddModal() {
     this.isEditMode = false;
     this.currentProductoId = undefined;
@@ -98,9 +103,10 @@ export class ProductsComponent implements OnInit {
       categoria_id: this.categorias[0]?.id || 0
     };
     this.showModal = true;
+    this.cdr.detectChanges();
   }
 
-  // Abrir modal para editar
+  // Abrir modal en modo edición
   openEditModal(producto: Producto) {
     this.isEditMode = true;
     this.currentProductoId = producto.id;
@@ -114,15 +120,18 @@ export class ProductsComponent implements OnInit {
       categoria_id: producto.categoria_id
     };
     this.showModal = true;
+    this.cdr.detectChanges();
   }
 
+  // Cerrar el modal y refrescar la UI
   closeModal() {
     this.showModal = false;
+    this.cdr.detectChanges();
   }
 
-  // Procesar el envío del formulario (Creación o Actualización)
+  // Procesar el envío del formulario (Creación o Edición)
   onSubmit() {
-    // Validaciones básicas
+    // Validaciones básicas de negocio en el cliente
     if (!this.productoForm.codigo.trim() || !this.productoForm.nombre.trim()) {
       alert('El código y el nombre del producto son obligatorios.');
       return;
@@ -151,7 +160,7 @@ export class ProductsComponent implements OnInit {
     };
 
     if (this.isEditMode && this.currentProductoId !== undefined) {
-      // Actualizar
+      // Actualizar producto existente
       this.productService.updateProducto(this.currentProductoId, payload).subscribe({
         next: (response) => {
           if (response.success) {
@@ -164,7 +173,7 @@ export class ProductsComponent implements OnInit {
         }
       });
     } else {
-      // Crear
+      // Crear nuevo producto
       this.productService.createProducto(payload).subscribe({
         next: (response) => {
           if (response.success) {
