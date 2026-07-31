@@ -3,44 +3,44 @@
 @import 'bootstrap-icons/font/bootstrap-icons.css';
 
 :root {
-  /* Colors */
-  --bg-primary: #0b0f19;
-  --bg-secondary: #131b2e;
-  --bg-tertiary: #1e2942;
-  --accent: #6366f1;
-  --accent-hover: #4f46e5;
-  --accent-light: #818cf8;
-  --accent-muted: rgba(99, 102, 241, 0.12);
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --border-color: rgba(255, 255, 255, 0.07);
+  /* Colors - University Dining System (Light Theme) */
+  --bg-primary: #f9f9ff;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #edf2f7;
+  --accent: #1A365D;
+  --accent-hover: #0f233f;
+  --accent-light: #4a6fa5;
+  --accent-muted: rgba(26, 54, 93, 0.08);
+  --text-primary: #111c2c;
+  --text-secondary: #4a5568;
+  --text-muted: #718096;
+  --border-color: #e2e8f0;
   --success: #10b981;
-  --success-muted: rgba(16, 185, 129, 0.15);
-  --warning: #f59e0b;
-  --warning-muted: rgba(245, 158, 11, 0.15);
+  --success-muted: rgba(16, 185, 129, 0.1);
+  --warning: #f6ad55;
+  --warning-muted: rgba(246, 173, 85, 0.1);
   --danger: #ef4444;
-  --danger-muted: rgba(239, 68, 68, 0.15);
-  --info: #3b82f6;
-  --info-muted: rgba(59, 130, 246, 0.15);
+  --danger-muted: rgba(239, 68, 68, 0.1);
+  --info: #3182ce;
+  --info-muted: rgba(49, 130, 206, 0.1);
   
   /* Fonts */
   --font-family-sans: 'Inter', sans-serif;
-  --font-family-display: 'Outfit', sans-serif;
+  --font-family-display: 'Inter', sans-serif;
   
   /* Layout */
   --navbar-height: 70px;
   --sidebar-width: 260px;
   --border-radius-sm: 8px;
-  --border-radius-md: 14px;
-  --border-radius-lg: 20px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
   
   /* Effects */
-  --card-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.7);
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
-  --glass-bg: rgba(19, 27, 46, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: #e2e8f0;
 }
 
 /* Reset */
@@ -165,7 +165,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .form-control {
-  background-color: rgba(255, 255, 255, 0.03);
+  background-color: rgba(0, 0, 0, 0.02);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
   padding: 12px 16px;
@@ -179,8 +179,8 @@ h1, h2, h3, h4, h5, h6 {
 .form-control:focus {
   outline: none;
   border-color: var(--accent);
-  background-color: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(26, 54, 93, 0.15);
 }
 
 /* Badges */

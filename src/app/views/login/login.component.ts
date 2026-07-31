@@ -40,7 +40,7 @@ export class LoginComponent {
     telefono: '',
     contrasenia: '',
     confirmarContrasenia: '',
-    tipo_cliente: 'estudiante' // Por defecto
+    tipo_cliente: 'cliente' // Por defecto (compatible con ENUM de base de datos)
   };
 
   // Alternar entre login y registro

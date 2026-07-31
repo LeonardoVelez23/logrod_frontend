@@ -1,1 +1,420 @@
-/* Dashboard styles */
+/* Contenedor Principal */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Cabecera */
+.view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.view-header h2 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.view-header p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* KPIs Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  transition: all var(--transition-normal);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(26, 54, 93, 0.15);
+  box-shadow: 0 10px 20px rgba(26, 54, 93, 0.04);
+}
+
+.kpi-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: var(--border-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+}
+
+/* Iconos de KPIs con gradientes específicos */
+.card-sales .kpi-icon {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+
+.card-orders .kpi-icon {
+  background: linear-gradient(135deg, var(--accent), #4a6fa5);
+  box-shadow: 0 0 12px rgba(26, 54, 93, 0.2);
+}
+
+.card-pending .kpi-icon {
+  background: linear-gradient(135deg, var(--warning), #f6ad55);
+  box-shadow: 0 0 12px rgba(246, 173, 85, 0.2);
+}
+
+.card-products .kpi-icon {
+  background: linear-gradient(135deg, var(--text-secondary), #718096);
+  box-shadow: 0 0 12px rgba(74, 85, 104, 0.2);
+}
+
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 6px 0 2px 0;
+  font-family: var(--font-family-display);
+}
+
+.kpi-subtext {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Gráficos y Distribución */
+.charts-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.chart-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+}
+
+.modality-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.stat-header strong {
+  color: var(--text-primary);
+}
+
+.bar-track {
+  height: 8px;
+  background-color: var(--border-color);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.6s cubic-bezier(0.1, 0.8, 0.2, 1);
+}
+
+.modality-summary {
+  display: flex;
+  justify-content: space-around;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.summary-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.box-num {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-family-display);
+}
+
+.box-lbl {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Lista de estados de pedidos */
+.status-bars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-bar-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.bar-track-sm {
+  height: 4px;
+  background-color: var(--border-color);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+/* Pedidos Recientes */
+.recent-orders-card {
+  padding: 24px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.card-header .card-title {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.card-header .subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.recent-orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  text-align: left;
+}
+
+.recent-orders-table th, .recent-orders-table td {
+  padding: 14px 16px;
+}
+
+.recent-orders-table th {
+  background-color: rgba(0, 0, 0, 0.01);
+  color: var(--text-secondary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.recent-orders-table td {
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.order-row {
+  transition: background-color var(--transition-fast);
+}
+
+.order-row:hover {
+  background-color: rgba(0, 0, 0, 0.01);
+}
+
+/* Responsividad */
+@media (max-width: 1200px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Fila Inferior Balanceada (Pedidos Recientes + Productos Más Populares) */
+.lower-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 20px;
+}
+
+.popular-products-card {
+  padding: 24px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.popular-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.popular-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.popular-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.popular-rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: rgba(26, 54, 93, 0.08);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.popular-item:nth-child(1) .popular-rank {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.popular-item:nth-child(2) .popular-rank {
+  background-color: #e2e8f0;
+  color: #475569;
+}
+
+.popular-item:nth-child(3) .popular-rank {
+  background-color: #ffedd5;
+  color: #ea580c;
+}
+
+.popular-details {
+  flex-fill: 1;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.popular-name {
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+
+.popular-price {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.popular-sales {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.sales-count {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--accent);
+}
+
+.sales-lbl {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 992px) {
+  .lower-row {
+    grid-template-columns: 1fr;
+  }
+}
+

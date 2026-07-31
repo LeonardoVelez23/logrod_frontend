@@ -1,1 +1,479 @@
-<p>Orders works</p>
+<div class="orders-container animate-fade-in">
+  <!-- Cabecera de la Vista -->
+  <div class="view-header">
+    <div class="header-text">
+      <h2>Seguimiento de Cocina</h2>
+      <p>Monitoreo en tiempo real de la preparación y entregas.</p>
+    </div>
+    
+    <div class="header-actions">
+      <!-- Buscador -->
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          placeholder="Buscar pedido por ID, cliente..." 
+          class="form-control search-input"
+        />
+      </div>
+      
+      <button class="btn btn-primary create-order-btn" (click)="openCreateModal()" title="Registrar un nuevo pedido">
+        <i class="bi bi-plus-lg"></i> + Nuevo Pedido
+      </button>
+
+      <button class="btn btn-secondary refresh-btn" (click)="loadPedidos()" title="Recargar pedidos">
+        <i class="bi bi-arrow-clockwise"></i> Recargar
+      </button>
+    </div>
+  </div>
+
+  <!-- Tablero Kanban -->
+  <div class="kanban-board">
+    
+    <!-- Columna: Solicitados -->
+    <div class="kanban-column column-solicitados">
+      <div class="column-header">
+        <div class="column-title">
+          <span class="status-indicator indicator-solicitado"></span>
+          <h3>Solicitados</h3>
+        </div>
+        <span class="count-badge">{{ getPedidosPorEstados(['solicitado', 'confirmado']).length }}</span>
+      </div>
+
+      <div class="column-cards custom-scrollbar">
+        <div 
+          *ngFor="let pedido of getPedidosPorEstados(['solicitado', 'confirmado'])" 
+          class="order-card"
+          (dblclick)="openDetail(pedido)"
+        >
+          <div class="card-top">
+            <span class="order-id">#{{ pedido.id }}</span>
+            <span class="modalidad-tag" [ngClass]="pedido.modalidad === 'presencial' ? 'tag-presencial' : 'tag-linea'">
+              {{ pedido.modalidad === 'presencial' ? 'COMEDOR' : 'LLEVAR' }}
+            </span>
+          </div>
+
+          <h4 class="client-name">{{ pedido.cliente?.nombres }} {{ pedido.cliente?.apellidos }}</h4>
+          
+          <div class="products-list">
+            <p *ngFor="let det of pedido.detalles" class="product-item">
+              🍔 <span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
+            </p>
+          </div>
+
+          <div class="card-footer">
+            <div class="time-elapsed text-warning">
+              <i class="bi bi-clock"></i> {{ getTiempoTranscurrido(pedido.createdAt) }}
+            </div>
+            
+            <button 
+              class="action-btn btn-start" 
+              (click)="iniciarPreparacion(pedido)"
+              title="Iniciar Preparación"
+            >
+              <i class="bi bi-play-fill"></i>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="getPedidosPorEstados(['solicitado', 'confirmado']).length === 0" class="empty-column-msg">
+          No hay pedidos solicitados
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna: En Preparación -->
+    <div class="kanban-column column-preparacion">
+      <div class="column-header">
+        <div class="column-title">
+          <span class="status-indicator indicator-preparacion"></span>
+          <h3>En Preparación</h3>
+        </div>
+        <span class="count-badge">{{ getPedidosPorEstados(['en preparación']).length }}</span>
+      </div>
+
+      <div class="column-cards custom-scrollbar">
+        <div 
+          *ngFor="let pedido of getPedidosPorEstados(['en preparación'])" 
+          class="order-card border-preparacion"
+          (dblclick)="openDetail(pedido)"
+        >
+          <div class="card-top">
+            <span class="order-id">#{{ pedido.id }}</span>
+            <span class="modalidad-tag" [ngClass]="pedido.modalidad === 'presencial' ? 'tag-presencial' : 'tag-linea'">
+              {{ pedido.modalidad === 'presencial' ? 'COMEDOR' : 'LLEVAR' }}
+            </span>
+          </div>
+
+          <h4 class="client-name">{{ pedido.cliente?.nombres }} {{ pedido.cliente?.apellidos }}</h4>
+          
+          <div class="products-list">
+            <p *ngFor="let det of pedido.detalles" class="product-item">
+              🍔 <span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
+            </p>
+          </div>
+
+          <!-- Barra de Progreso de Preparación (Basado en 20 minutos de objetivo) -->
+          <div class="preparation-progress">
+            <div class="progress-label">
+              <span>Progreso target</span>
+              <span>{{ getProgreso(pedido.createdAt) }}%</span>
+            </div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" [style.width.%]="getProgreso(pedido.createdAt)"></div>
+            </div>
+            <span class="elapsed-time-text">
+              ⌛ Preparando ({{ getMinutosTranscurridos(pedido.createdAt) }}m transcurridos)
+            </span>
+          </div>
+
+          <div class="card-footer mt-2">
+            <div class="assigned-user" [title]="pedido.empleadoResponsable ? 'Asignado a: ' + pedido.empleadoResponsable.nombres : 'Sin asignar'">
+              <div class="avatar-sm">
+                {{ getInitials(pedido.empleadoResponsable?.nombres, pedido.empleadoResponsable?.apellidos) }}
+              </div>
+              <span class="avatar-name">
+                {{ pedido.empleadoResponsable ? pedido.empleadoResponsable.nombres : 'No asignado' }}
+              </span>
+            </div>
+            
+            <button 
+              class="btn-mark-ready" 
+              (click)="marcarListo(pedido)"
+            >
+              Listo
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="getPedidosPorEstados(['en preparación']).length === 0" class="empty-column-msg">
+          No hay pedidos en preparación
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna: Listos para Entrega -->
+    <div class="kanban-column column-listos">
+      <div class="column-header">
+        <div class="column-title">
+          <span class="status-indicator indicator-listo"></span>
+          <h3>Listos</h3>
+        </div>
+        <span class="count-badge">{{ getPedidosPorEstados(['listo']).length }}</span>
+      </div>
+
+      <div class="column-cards custom-scrollbar">
+        <div 
+          *ngFor="let pedido of getPedidosPorEstados(['listo'])" 
+          class="order-card border-listo"
+          (dblclick)="openDetail(pedido)"
+        >
+          <div class="card-top">
+            <span class="order-id">#{{ pedido.id }}</span>
+            <div class="d-flex gap-1 align-items-center">
+              <span class="badge badge-success text-[10px] py-1">LISTO</span>
+              <span class="modalidad-tag" [ngClass]="pedido.modalidad === 'presencial' ? 'tag-presencial' : 'tag-linea'">
+                {{ pedido.modalidad === 'presencial' ? 'COMEDOR' : 'LLEVAR' }}
+              </span>
+            </div>
+          </div>
+
+          <h4 class="client-name">{{ pedido.cliente?.nombres }} {{ pedido.cliente?.apellidos }}</h4>
+          
+          <div class="products-list">
+            <p *ngFor="let det of pedido.detalles" class="product-item">
+              🍔 <span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
+            </p>
+          </div>
+
+          <div class="card-footer pt-3 border-t">
+            <div class="assigned-user">
+              <div class="avatar-sm">
+                {{ getInitials(pedido.empleadoResponsable?.nombres, pedido.empleadoResponsable?.apellidos) }}
+              </div>
+              <span class="avatar-name">
+                {{ pedido.empleadoResponsable ? pedido.empleadoResponsable.nombres : 'Chef' }}
+              </span>
+            </div>
+            
+            <button 
+              class="btn-deliver" 
+              (click)="entregarPedido(pedido)"
+            >
+              Entregar <i class="bi bi-arrow-right-short"></i>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="getPedidosPorEstados(['listo']).length === 0" class="empty-column-msg">
+          No hay pedidos listos
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal de Detalle de Pedido -->
+  <div class="modal-backdrop" *ngIf="showDetailModal && selectedPedido">
+    <div class="glass-card detail-modal animate-fade-in">
+      <div class="modal-header">
+        <h3>Detalle del Pedido #{{ selectedPedido.id }}</h3>
+        <button class="close-btn" (click)="closeDetail()">&times;</button>
+      </div>
+
+      <div class="modal-body custom-scrollbar">
+        <!-- Fila Cliente -->
+        <div class="info-section">
+          <h4 class="section-title"><i class="bi bi-person-fill"></i> Datos del Cliente</h4>
+          <div class="client-details">
+            <div class="detail-row">
+              <span class="detail-label">Nombre:</span>
+              <span class="detail-val">{{ selectedPedido.cliente?.nombres }} {{ selectedPedido.cliente?.apellidos }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Identificación:</span>
+              <span class="detail-val">{{ selectedPedido.cliente?.identificacion }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Correo:</span>
+              <span class="detail-val">{{ selectedPedido.cliente?.correo_electronico }}</span>
+            </div>
+            <div class="detail-row" *ngIf="selectedPedido.cliente?.telefono">
+              <span class="detail-label">Teléfono:</span>
+              <span class="detail-val">{{ selectedPedido.cliente?.telefono }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fila Productos -->
+        <div class="info-section">
+          <h4 class="section-title"><i class="bi bi-card-list"></i> Resumen de Productos</h4>
+          <div class="products-table-wrapper">
+            <table class="products-table">
+              <thead>
+                <tr>
+                  <th>Cant.</th>
+                  <th>Producto</th>
+                  <th class="text-end">Precio U.</th>
+                  <th class="text-end">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let det of selectedPedido.detalles">
+                  <td class="qty-col">{{ det.cantidad }}</td>
+                  <td>{{ det.producto?.nombre }}</td>
+                  <td class="text-end">${{ det.precio_unitario | number:'1.2-2' }}</td>
+                  <td class="text-end">${{ det.subtotal | number:'1.2-2' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="order-total-bar">
+            <span>Total a Pagar</span>
+            <span class="total-price">${{ selectedPedido.valor_total | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <!-- Fila Información Técnica y Estado -->
+        <div class="info-section row g-3">
+          <div class="col-md-6">
+            <h4 class="section-title"><i class="bi bi-info-circle-fill"></i> Estado General</h4>
+            <div class="status-details">
+              <div class="detail-row">
+                <span class="detail-label">Fecha/Hora:</span>
+                <span class="detail-val">{{ selectedPedido.fecha }} {{ selectedPedido.hora }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Modalidad:</span>
+                <span class="badge" [ngClass]="selectedPedido.modalidad === 'presencial' ? 'badge-info' : 'badge-warning'">
+                  {{ selectedPedido.modalidad | uppercase }}
+                </span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Estado:</span>
+                <span class="badge" [ngClass]="{
+                  'badge-warning': selectedPedido.estado === 'solicitado' || selectedPedido.estado === 'confirmado',
+                  'badge-info': selectedPedido.estado === 'en preparación',
+                  'badge-success': selectedPedido.estado === 'listo',
+                  'badge-danger': selectedPedido.estado === 'cancelado',
+                  'badge-secondary': selectedPedido.estado === 'entregado'
+                }">{{ selectedPedido.estado | uppercase }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Asignar Responsable (Solo Admin/Empleado) -->
+          <div class="col-md-6">
+            <h4 class="section-title"><i class="bi bi-person-badge"></i> Empleado Asignado</h4>
+            
+            <div class="employee-assignment-box" *ngIf="authService.getCurrentRole() === 'admin'">
+              <select 
+                [value]="selectedPedido.empleado_id || ''" 
+                (change)="onEmpleadoChange(selectedPedido.id!, $event)"
+                class="form-control select-employee"
+              >
+                <option value="">-- Sin asignar --</option>
+                <option *ngFor="let emp of empleados" [value]="emp.id">
+                  {{ emp.nombres }} {{ emp.apellidos }} ({{ emp.cargo || 'Personal' }})
+                </option>
+              </select>
+            </div>
+            
+            <div class="assigned-employee-read" *ngIf="authService.getCurrentRole() !== 'admin'">
+              <div class="assigned-user-info" *ngIf="selectedPedido.empleadoResponsable">
+                <div class="avatar-sm d-inline-flex me-2">
+                  {{ getInitials(selectedPedido.empleadoResponsable.nombres, selectedPedido.empleadoResponsable.apellidos) }}
+                </div>
+                <span>{{ selectedPedido.empleadoResponsable.nombres }} {{ selectedPedido.empleadoResponsable.apellidos }}</span>
+              </div>
+              <p *ngIf="!selectedPedido.empleadoResponsable" class="text-muted italic">Sin asignar</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeDetail()">Cerrar</button>
+        
+        <button 
+          class="btn btn-danger" 
+          *ngIf="selectedPedido.estado !== 'entregado' && selectedPedido.estado !== 'cancelado'" 
+          (click)="cancelarPedido(selectedPedido)"
+        >
+          Cancelar Pedido
+        </button>
+
+        <button 
+          class="btn btn-primary" 
+          *ngIf="selectedPedido.estado === 'solicitado' || selectedPedido.estado === 'confirmado'" 
+          (click)="iniciarPreparacion(selectedPedido)"
+        >
+          <i class="bi bi-play-fill"></i> Iniciar Preparación
+        </button>
+
+        <button 
+          class="btn btn-primary" 
+          *ngIf="selectedPedido.estado === 'en preparación'" 
+          (click)="marcarListo(selectedPedido)"
+        >
+          <i class="bi bi-check-circle-fill"></i> Marcar Listo
+        </button>
+
+        <button 
+          class="btn btn-primary" 
+          *ngIf="selectedPedido.estado === 'listo'" 
+          (click)="entregarPedido(selectedPedido)"
+        >
+          Entregar Pedido <i class="bi bi-arrow-right-short"></i>
+        </button>
+      </div>
+    </div>
+  <!-- Modal de Registrar Nuevo Pedido -->
+  <div class="modal-backdrop" *ngIf="showCreateModal">
+    <div class="glass-card detail-modal create-modal animate-fade-in">
+      <div class="modal-header">
+        <h3>📝 Registrar Nuevo Pedido</h3>
+        <button class="close-btn" (click)="closeCreateModal()">&times;</button>
+      </div>
+
+      <div class="modal-body custom-scrollbar">
+        <!-- Selección de Cliente y Modalidad -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label font-semibold text-sm mb-1">Cliente</label>
+            <select [(ngModel)]="newOrderClienteId" class="form-control">
+              <option *ngIf="clientes.length === 0" [ngValue]="null">No hay clientes registrados</option>
+              <option *ngFor="let c of clientes" [value]="c.id">
+                {{ c.nombres }} {{ c.apellidos }} (DNI: {{ c.identificacion }})
+              </option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label font-semibold text-sm mb-1">Modalidad de Servicio</label>
+            <select [(ngModel)]="newOrderModalidad" class="form-control">
+              <option value="presencial">🍽️ COMEDOR (Presencial)</option>
+              <option value="en línea">🛍️ PARA LLEVAR (En línea)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Selección y Adición de Productos -->
+        <div class="info-section mb-4">
+          <h4 class="section-title">🍔 Seleccionar Productos</h4>
+          <div class="row g-2 align-items-end mb-3">
+            <div class="col-md-7">
+              <label class="form-label text-xs mb-1">Producto disponible</label>
+              <select [(ngModel)]="selectedProductId" class="form-control">
+                <option *ngIf="productosDisponibles.length === 0" [ngValue]="null">No hay productos disponibles con stock</option>
+                <option *ngFor="let p of productosDisponibles" [value]="p.id">
+                  {{ p.nombre }} - ${{ p.precio | number:'1.2-2' }} (Stock: {{ p.cantidad_disponible }})
+                </option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label text-xs mb-1">Cantidad</label>
+              <input type="number" [(ngModel)]="selectedQuantity" min="1" max="50" class="form-control" />
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-primary w-100" (click)="addItemToNewOrder()">
+                + Agregar
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabla de Productos Seleccionados en el Borrador -->
+          <div class="products-table-wrapper">
+            <table class="products-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th class="text-center">Cant.</th>
+                  <th class="text-end">Precio U.</th>
+                  <th class="text-end">Subtotal</th>
+                  <th class="text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of newOrderItems; let i = index">
+                  <td>{{ item.producto.nombre }}</td>
+                  <td class="text-center">{{ item.cantidad }}</td>
+                  <td class="text-end">${{ item.precio_unitario | number:'1.2-2' }}</td>
+                  <td class="text-end">${{ item.subtotal | number:'1.2-2' }}</td>
+                  <td class="text-center">
+                    <button class="btn-remove-item" (click)="removeItemFromNewOrder(i)" title="Eliminar ítem">
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="newOrderItems.length === 0">
+                  <td colspan="5" class="text-center text-muted py-3">
+                    No se han agregado productos al pedido aún.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="order-total-bar mt-3">
+            <span>Total del Pedido</span>
+            <span class="total-price">${{ getNewOrderTotal() | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeCreateModal()">Cancelar</button>
+        <button 
+          class="btn btn-primary" 
+          [disabled]="isSubmittingOrder || newOrderItems.length === 0 || !newOrderClienteId"
+          (click)="guardarNuevoPedido()"
+        >
+          <span *ngIf="!isSubmittingOrder">💾 Registrar Pedido</span>
+          <span *ngIf="isSubmittingOrder">Guardando...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

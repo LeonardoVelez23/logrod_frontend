@@ -33,7 +33,7 @@
   font-family: var(--font-family-display);
   font-size: 20px;
   font-weight: 700;
-  background: linear-gradient(90deg, #fff, var(--text-secondary));
+  background: linear-gradient(90deg, var(--accent), var(--text-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
