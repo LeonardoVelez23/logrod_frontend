@@ -50,6 +50,12 @@
             <span>🍔</span> Catálogo de Productos
           </a>
         </li>
+        <!-- Only Admin can manage users -->
+        <li *ngIf="currentRole === 'admin'">
+          <a routerLink="/admin/usuarios" routerLinkActive="active" class="sidebar-link">
+            <span>👤</span> Control de Usuarios
+          </a>
+        </li>
       </ul>
     </aside>
 
