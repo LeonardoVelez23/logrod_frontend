@@ -91,7 +91,7 @@
                 </button>
                 <button 
                   class="action-btn-tbl delete-tbl-btn" 
-                  (click)="deleteProducto(prod)" 
+                  (click)="openDeleteModal(prod)" 
                   title="Eliminar Producto"
                 >
                   <i class="bi bi-trash-fill"></i>
@@ -225,6 +225,32 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmación de Eliminación -->
+  <div class="modal-backdrop" *ngIf="showDeleteModal">
+    <div class="glass-card delete-modal animate-fade-in">
+      <div class="delete-modal-icon">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+      </div>
+      <div class="delete-modal-content">
+        <h3 class="delete-modal-title">¿Eliminar producto?</h3>
+        <p class="delete-modal-message">
+          ¿Estás seguro de que deseas borrar
+          <strong>"{{ productToDelete?.nombre }}"</strong>
+          <span class="delete-modal-code">({{ productToDelete?.codigo }})</span>?
+        </p>
+        <p class="delete-modal-warning">Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="delete-modal-actions">
+        <button class="btn btn-secondary" (click)="closeDeleteModal()">
+          Cancelar
+        </button>
+        <button class="btn btn-danger-solid" (click)="confirmDelete()">
+          <i class="bi bi-trash-fill"></i> Sí, Eliminar
+        </button>
+      </div>
     </div>
   </div>
 
