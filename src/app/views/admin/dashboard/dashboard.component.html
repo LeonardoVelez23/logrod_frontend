@@ -175,56 +175,86 @@
     </div>
   </div>
 
-  <!-- Sección: Pedidos Recientes -->
-  <div class="glass-card recent-orders-card">
-    <div class="card-header">
-      <h3 class="card-title"><i class="bi bi-clock-history"></i> Actividad Reciente</h3>
-      <span class="subtitle">Últimos 5 pedidos registrados</span>
+  <!-- Fila Inferior: Actividad Reciente y Productos Populares -->
+  <div class="lower-row">
+    <!-- Sección: Pedidos Recientes -->
+    <div class="glass-card recent-orders-card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="bi bi-clock-history"></i> Actividad Reciente</h3>
+        <span class="subtitle">Últimos 5 pedidos registrados</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="recent-orders-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Cliente</th>
+              <th>Fecha / Hora</th>
+              <th>Modalidad</th>
+              <th class="text-end">Total</th>
+              <th class="text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let pedido of recentOrders" class="order-row">
+              <td><strong>#{{ pedido.id }}</strong></td>
+              <td>{{ pedido.cliente?.nombres }} {{ pedido.cliente?.apellidos }}</td>
+              <td>{{ pedido.fecha }} <span class="text-secondary-text">{{ pedido.hora }}</span></td>
+              <td>
+                <span class="badge" [ngClass]="pedido.modalidad === 'presencial' ? 'badge-info' : 'badge-warning'">
+                  {{ pedido.modalidad }}
+                </span>
+              </td>
+              <td class="text-end font-semibold">${{ pedido.valor_total | number:'1.2-2' }}</td>
+              <td class="text-center">
+                <span class="badge" [ngClass]="{
+                  'badge-warning': pedido.estado === 'solicitado' || pedido.estado === 'confirmado',
+                  'badge-info': pedido.estado === 'en preparación',
+                  'badge-success': pedido.estado === 'listo',
+                  'badge-danger': pedido.estado === 'cancelado',
+                  'badge-secondary': pedido.estado === 'entregado'
+                }">
+                  {{ pedido.estado }}
+                </span>
+              </td>
+            </tr>
+
+            <tr *ngIf="recentOrders.length === 0">
+              <td colspan="6" class="text-center py-4 text-muted">
+                No se han registrado pedidos en el sistema.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="table-responsive">
-      <table class="recent-orders-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Cliente</th>
-            <th>Fecha / Hora</th>
-            <th>Modalidad</th>
-            <th class="text-end">Total</th>
-            <th class="text-center">Estado</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let pedido of recentOrders" class="order-row">
-            <td><strong>#{{ pedido.id }}</strong></td>
-            <td>{{ pedido.cliente?.nombres }} {{ pedido.cliente?.apellidos }}</td>
-            <td>{{ pedido.fecha }} <span class="text-secondary-text">{{ pedido.hora }}</span></td>
-            <td>
-              <span class="badge" [ngClass]="pedido.modalidad === 'presencial' ? 'badge-info' : 'badge-warning'">
-                {{ pedido.modalidad }}
-              </span>
-            </td>
-            <td class="text-end font-semibold">${{ pedido.valor_total | number:'1.2-2' }}</td>
-            <td class="text-center">
-              <span class="badge" [ngClass]="{
-                'badge-warning': pedido.estado === 'solicitado' || pedido.estado === 'confirmado',
-                'badge-info': pedido.estado === 'en preparación',
-                'badge-success': pedido.estado === 'listo',
-                'badge-danger': pedido.estado === 'cancelado',
-                'badge-secondary': pedido.estado === 'entregado'
-              }">
-                {{ pedido.estado }}
-              </span>
-            </td>
-          </tr>
+    <!-- Sección: Productos Más Populares -->
+    <div class="glass-card popular-products-card">
+      <div class="card-header border-0 pb-0 mb-0">
+        <h3 class="card-title"><i class="bi bi-star-fill text-warning"></i> Productos Populares</h3>
+        <span class="subtitle">Los 5 productos más vendidos del menú</span>
+      </div>
 
-          <tr *ngIf="recentOrders.length === 0">
-            <td colspan="6" class="text-center py-4 text-muted">
-              No se han registrado pedidos en el sistema.
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="popular-list mt-3">
+        <div class="popular-item" *ngFor="let prod of popularProducts; let i = index">
+          <div class="popular-rank">{{ i + 1 }}</div>
+          <div class="popular-details">
+            <span class="popular-name">{{ prod.nombre }}</span>
+            <span class="popular-price">${{ prod.precio | number:'1.2-2' }}</span>
+          </div>
+          <div class="popular-sales">
+            <span class="sales-count">{{ prod.totalVendido }}</span>
+            <span class="sales-lbl">unidades</span>
+          </div>
+        </div>
+
+        <div *ngIf="popularProducts.length === 0" class="text-center py-4 text-muted">
+          No hay datos de ventas disponibles.
+        </div>
+      </div>
     </div>
   </div>
 </div>
+

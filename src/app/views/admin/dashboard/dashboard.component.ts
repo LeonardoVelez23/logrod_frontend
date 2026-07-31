@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OrderService, Pedido } from '../../../services/order.service';
 import { ProductService, Producto } from '../../../services/product.service';
+import { DashboardService, DashboardStats } from '../../../services/dashboard.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -13,21 +14,22 @@ import { ProductService, Producto } from '../../../services/product.service';
 export class DashboardComponent implements OnInit {
   private orderService = inject(OrderService);
   private productService = inject(ProductService);
+  private dashboardService = inject(DashboardService);
 
   pedidos: Pedido[] = [];
   productos: Producto[] = [];
 
-  // KPIs
+  // Indicadores clave de rendimiento (KPIs)
   totalSales: number = 0;
   totalOrdersCount: number = 0;
   pendingOrdersCount: number = 0;
   totalProductsCount: number = 0;
 
-  // Breakdown por modalidad
+  // Desglose por modalidad de pedidos
   presencialCount: number = 0;
   enLineaCount: number = 0;
 
-  // Breakdown por estado
+  // Desglose de conteos por estado del pedido
   statusCounts = {
     solicitado: 0,
     confirmado: 0,
@@ -37,27 +39,71 @@ export class DashboardComponent implements OnInit {
     cancelado: 0
   };
 
+  // Lista para almacenar los productos más vendidos
+  popularProducts: Array<{
+    id: number;
+    nombre: string;
+    precio: number;
+    totalVendido: number;
+  }> = [];
+
   recentOrders: Pedido[] = [];
 
   ngOnInit() {
     this.loadData();
   }
 
+  // Cargar todos los datos de métricas y pedidos recientes
   loadData() {
-    // Cargar Pedidos
+    // 1. Cargar estadísticas consolidadas del backend
+    this.dashboardService.getStats().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          const stats: DashboardStats = res.data;
+          
+          this.totalSales = stats.totalRevenue;
+          this.totalOrdersCount = stats.totalOrders;
+          this.presencialCount = stats.modalityDistribution.presencial;
+          this.enLineaCount = stats.modalityDistribution['en línea'];
+          
+          this.statusCounts = {
+            solicitado: stats.orderStatusDistribution.solicitado,
+            confirmado: stats.orderStatusDistribution.confirmado,
+            en_preparacion: stats.orderStatusDistribution['en preparación'],
+            listo: stats.orderStatusDistribution.listo,
+            entregado: stats.orderStatusDistribution.entregado,
+            cancelado: stats.orderStatusDistribution.cancelado
+          };
+
+          // Calcular pedidos en espera sumando los estados activos
+          this.pendingOrdersCount = 
+            this.statusCounts.solicitado + 
+            this.statusCounts.confirmado + 
+            this.statusCounts.en_preparacion + 
+            this.statusCounts.listo;
+
+          this.popularProducts = stats.popularProducts;
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar estadísticas del dashboard:', err);
+      }
+    });
+
+    // 2. Cargar lista completa de pedidos para la tabla de actividad reciente
     this.orderService.getPedidos().subscribe({
       next: (orderRes) => {
         if (orderRes.success) {
           this.pedidos = orderRes.data;
-          this.calculateOrderMetrics();
+          this.recentOrders = this.pedidos.slice(0, 5); // Tomar solo los últimos 5 registros
         }
       },
       error: (err) => {
-        console.error('Error al cargar pedidos para el dashboard:', err);
+        console.error('Error al cargar pedidos recientes para el dashboard:', err);
       }
     });
 
-    // Cargar Productos
+    // 3. Cargar catálogo de productos para contar el inventario activo
     this.productService.getProductos().subscribe({
       next: (productRes) => {
         if (productRes.success) {
@@ -66,59 +112,12 @@ export class DashboardComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error al cargar productos para el dashboard:', err);
+        console.error('Error al cargar catálogo de productos para el dashboard:', err);
       }
     });
   }
 
-  calculateOrderMetrics() {
-    this.totalOrdersCount = this.pedidos.length;
-    this.recentOrders = this.pedidos.slice(0, 5); // Últimos 5 pedidos
-
-    // Resetear contadores
-    this.totalSales = 0;
-    this.pendingOrdersCount = 0;
-    this.presencialCount = 0;
-    this.enLineaCount = 0;
-    this.statusCounts = {
-      solicitado: 0,
-      confirmado: 0,
-      en_preparacion: 0,
-      listo: 0,
-      entregado: 0,
-      cancelado: 0
-    };
-
-    this.pedidos.forEach(pedido => {
-      // Sumar ventas solo de pedidos entregados
-      if (pedido.estado === 'entregado') {
-        this.totalSales += Number(pedido.valor_total);
-      }
-
-      // Contar pendientes
-      const esPendiente = ['solicitado', 'confirmado', 'en preparación', 'listo'].includes(pedido.estado);
-      if (esPendiente) {
-        this.pendingOrdersCount++;
-      }
-
-      // Contar por modalidad
-      if (pedido.modalidad === 'presencial') {
-        this.presencialCount++;
-      } else {
-        this.enLineaCount++;
-      }
-
-      // Contar por estado
-      if (pedido.estado === 'solicitado') this.statusCounts.solicitado++;
-      else if (pedido.estado === 'confirmado') this.statusCounts.confirmado++;
-      else if (pedido.estado === 'en preparación') this.statusCounts.en_preparacion++;
-      else if (pedido.estado === 'listo') this.statusCounts.listo++;
-      else if (pedido.estado === 'entregado') this.statusCounts.entregado++;
-      else if (pedido.estado === 'cancelado') this.statusCounts.cancelado++;
-    });
-  }
-
-  // Helpers de porcentajes para gráficos CSS
+  // Helper para calcular porcentajes visuales en los gráficos CSS
   getPercent(value: number, total: number): number {
     if (total === 0) return 0;
     return Math.round((value / total) * 100);
