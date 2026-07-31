@@ -22,10 +22,14 @@ export class ProductsComponent implements OnInit {
   selectedCategoriaId: string = '';
   selectedEstado: string = '';
 
-  // Control de Modal y Formulario
+  // Control de Modal de Edición/Creación
   showModal: boolean = false;
   isEditMode: boolean = false;
   currentProductoId?: number;
+
+  // Control de Modal de Eliminación
+  showDeleteModal: boolean = false;
+  productToDelete: Producto | null = null;
 
   productoForm = {
     codigo: '',
@@ -188,22 +192,39 @@ export class ProductsComponent implements OnInit {
     }
   }
 
-  // Eliminar un producto del catálogo
-  deleteProducto(producto: Producto) {
-    if (confirm(`¿Está seguro de que desea eliminar el producto "${producto.nombre}"?`)) {
-      if (producto.id !== undefined) {
-        this.productService.deleteProducto(producto.id).subscribe({
-          next: (response) => {
-            if (response.success) {
-              this.loadProductos();
-            }
-          },
-          error: (err) => {
-            alert('Error al eliminar el producto: ' + (err.error?.message || err.message));
-          }
-        });
-      }
+  // Abrir modal de confirmación de eliminación
+  openDeleteModal(producto: Producto) {
+    this.productToDelete = producto;
+    this.showDeleteModal = true;
+    this.cdr.detectChanges();
+  }
+
+  // Cerrar modal de eliminación
+  closeDeleteModal() {
+    this.showDeleteModal = false;
+    this.productToDelete = null;
+    this.cdr.detectChanges();
+  }
+
+  // Confirmar y ejecutar la eliminación del producto
+  confirmDelete() {
+    if (!this.productToDelete || this.productToDelete.id === undefined) {
+      return;
     }
+
+    const prodId = this.productToDelete.id;
+    this.productService.deleteProducto(prodId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.loadProductos();
+          this.closeDeleteModal();
+        }
+      },
+      error: (err) => {
+        alert('Error al eliminar el producto: ' + (err.error?.message || err.message));
+        this.closeDeleteModal();
+      }
+    });
   }
 }
 export { ProductsComponent as Products };
