@@ -126,7 +126,7 @@
             <td>{{ cli.correo_electronico }}</td>
             <td>{{ cli.telefono || '—' }}</td>
             <td class="text-center">
-              <span class="badge badge-info">{{ (cli.tipo_cliente || 'cliente') | uppercase }}</span>
+              <span class="badge badge-info">{{ cli.tipo_cliente || 'Persona externa' }}</span>
             </td>
             <td class="text-end">
               <div class="actions-wrapper">
@@ -298,9 +298,10 @@
             <div class="col-md-6 form-group">
               <label class="form-label">Tipo de Cliente *</label>
               <select [(ngModel)]="clienteForm.tipo_cliente" name="tipo_cliente" required class="form-control">
-                <option value="cliente">Cliente</option>
-                <option value="empleado">Empleado</option>
-                <option value="administrador">Administrador</option>
+                <option value="Estudiante">Estudiante</option>
+                <option value="Docente">Docente</option>
+                <option value="Personal Administrativo">Personal Administrativo</option>
+                <option value="Persona externa">Persona externa</option>
               </select>
             </div>
             <div class="col-md-6 form-group">

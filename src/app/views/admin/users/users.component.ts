@@ -54,7 +54,7 @@ export class UsersComponent implements OnInit {
     apellidos: '',
     correo_electronico: '',
     telefono: '',
-    tipo_cliente: 'cliente' as 'cliente' | 'empleado' | 'administrador',
+    tipo_cliente: 'Persona externa' as 'Estudiante' | 'Docente' | 'Personal Administrativo' | 'Persona externa',
     contrasenia: ''
   };
 
@@ -176,7 +176,7 @@ export class UsersComponent implements OnInit {
     } else {
       this.clienteForm = {
         identificacion: '', nombres: '', apellidos: '', correo_electronico: '',
-        telefono: '', tipo_cliente: 'cliente', contrasenia: ''
+        telefono: '', tipo_cliente: 'Persona externa', contrasenia: ''
       };
     }
     this.showModal = true;
@@ -206,7 +206,7 @@ export class UsersComponent implements OnInit {
         apellidos: cli.apellidos,
         correo_electronico: cli.correo_electronico,
         telefono: cli.telefono || '',
-        tipo_cliente: cli.tipo_cliente || 'cliente',
+        tipo_cliente: cli.tipo_cliente || 'Persona externa',
         contrasenia: ''
       };
     }

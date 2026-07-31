@@ -10,7 +10,7 @@ export interface Cliente {
   apellidos: string;
   correo_electronico: string;
   telefono?: string;
-  tipo_cliente?: 'cliente' | 'empleado' | 'administrador';
+  tipo_cliente?: 'Estudiante' | 'Docente' | 'Personal Administrativo' | 'Persona externa';
   contrasenia?: string;
 }
 
