@@ -213,6 +213,11 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--info);
 }
 
+.badge-secondary {
+  background-color: rgba(74, 85, 104, 0.15) !important;
+  color: #4a5568 !important;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }

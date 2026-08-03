@@ -44,6 +44,11 @@
             <span>📦</span> Gestión de Pedidos
           </a>
         </li>
+        <li>
+          <a routerLink="/admin/historial" routerLinkActive="active" class="sidebar-link">
+            <span>📋</span> Historial de Ventas
+          </a>
+        </li>
         <!-- Only Admin can manage catalog -->
         <li *ngIf="currentRole === 'admin'">
           <a routerLink="/admin/products" routerLinkActive="active" class="sidebar-link">

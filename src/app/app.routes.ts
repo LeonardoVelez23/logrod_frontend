@@ -7,6 +7,7 @@ import { Dashboard } from './views/admin/dashboard/dashboard.component';
 import { Products } from './views/admin/products/products.component';
 import { Orders } from './views/admin/orders/orders.component';
 import { Users } from './views/admin/users/users.component';
+import { OrderHistoryComponent } from './views/admin/order-history/order-history.component';
 import { authGuard, roleGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -32,6 +33,11 @@ export const routes: Routes = [
       {
         path: 'admin/orders',
         component: Orders,
+        canActivate: [roleGuard(['admin', 'empleado'])]
+      },
+      {
+        path: 'admin/historial',
+        component: OrderHistoryComponent,
         canActivate: [roleGuard(['admin', 'empleado'])]
       },
       {
