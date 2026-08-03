@@ -5,6 +5,7 @@ import { EmployeeService, Empleado } from '../../../services/employee.service';
 import { ClientService, Cliente } from '../../../services/client.service';
 import { AuthService } from '../../../services/auth.service';
 import { ModalComponent } from '../../../components/modal/modal.component';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-users',
@@ -18,6 +19,8 @@ export class UsersComponent implements OnInit {
   private employeeService = inject(EmployeeService);
   private clientService = inject(ClientService);
   private authService = inject(AuthService);
+  private toastService = inject(ToastService);
+
   private cdr = inject(ChangeDetectorRef);
 
   activeTab: 'empleados' | 'clientes' = 'empleados';
@@ -234,19 +237,19 @@ export class UsersComponent implements OnInit {
   private submitEmpleado() {
     const form = this.empleadoForm;
     if (!form.identificacion.trim() || !form.nombres.trim() || !form.apellidos.trim() || !form.correo_electronico.trim()) {
-      alert('Identificación, nombres, apellidos y correo electrónico son obligatorios.');
+      this.toastService.showWarning('Identificación, nombres, apellidos y correo electrónico son obligatorios.');
       return;
     }
     if (form.identificacion.trim().length !== 10) {
-      alert('La identificación debe tener 10 dígitos.');
+      this.toastService.showWarning('La identificación debe tener 10 dígitos.');
       return;
     }
     if (form.telefono.trim() && !this.telefonoValido(form.telefono.trim())) {
-      alert('El teléfono debe tener 10 dígitos e iniciar en 0. Ej. 0961921004');
+      this.toastService.showWarning('El teléfono debe tener 10 dígitos e iniciar en 0. Ej. 0961921004');
       return;
     }
     if (!this.isEditMode && !form.contrasenia.trim()) {
-      alert('La contraseña es obligatoria para crear un nuevo empleado.');
+      this.toastService.showWarning('La contraseña es obligatoria para crear un nuevo empleado.');
       return;
     }
 
@@ -273,13 +276,14 @@ export class UsersComponent implements OnInit {
           if (response.success) {
             this.loadEmpleados();
             this.showModal = false;
+            this.toastService.showSuccess('Empleado actualizado correctamente.');
           }
           this.cdr.detectChanges();
         },
         error: (err) => {
           this.saving = false;
           this.cdr.detectChanges();
-          alert('Error al actualizar el empleado: ' + (err.error?.message || err.message));
+          this.toastService.showError('Error al actualizar el empleado: ' + (err.error?.message || err.message));
         }
       });
     } else {
@@ -289,13 +293,14 @@ export class UsersComponent implements OnInit {
           if (response.success) {
             this.loadEmpleados();
             this.showModal = false;
+            this.toastService.showSuccess('Empleado creado correctamente.');
           }
           this.cdr.detectChanges();
         },
         error: (err) => {
           this.saving = false;
           this.cdr.detectChanges();
-          alert('Error al crear el empleado: ' + (err.error?.message || err.message));
+          this.toastService.showError('Error al crear el empleado: ' + (err.error?.message || err.message));
         }
       });
     }
@@ -304,19 +309,19 @@ export class UsersComponent implements OnInit {
   private submitCliente() {
     const form = this.clienteForm;
     if (!form.identificacion.trim() || !form.nombres.trim() || !form.apellidos.trim() || !form.correo_electronico.trim()) {
-      alert('Identificación, nombres, apellidos y correo electrónico son obligatorios.');
+      this.toastService.showWarning('Identificación, nombres, apellidos y correo electrónico son obligatorios.');
       return;
     }
     if (form.identificacion.trim().length !== 10) {
-      alert('La identificación debe tener 10 dígitos.');
+      this.toastService.showWarning('La identificación debe tener 10 dígitos.');
       return;
     }
     if (form.telefono.trim() && !this.telefonoValido(form.telefono.trim())) {
-      alert('El teléfono debe tener 10 dígitos e iniciar en 0. Ej. 0961921004');
+      this.toastService.showWarning('El teléfono debe tener 10 dígitos e iniciar en 0. Ej. 0961921004');
       return;
     }
     if (!this.isEditMode && !form.contrasenia.trim()) {
-      alert('La contraseña es obligatoria para crear un nuevo cliente.');
+      this.toastService.showWarning('La contraseña es obligatoria para crear un nuevo cliente.');
       return;
     }
 
@@ -342,13 +347,14 @@ export class UsersComponent implements OnInit {
           if (response.success) {
             this.loadClientes();
             this.showModal = false;
+            this.toastService.showSuccess('Cliente actualizado correctamente.');
           }
           this.cdr.detectChanges();
         },
         error: (err) => {
           this.saving = false;
           this.cdr.detectChanges();
-          alert('Error al actualizar el cliente: ' + (err.error?.message || err.message));
+          this.toastService.showError('Error al actualizar el cliente: ' + (err.error?.message || err.message));
         }
       });
     } else {
@@ -358,13 +364,14 @@ export class UsersComponent implements OnInit {
           if (response.success) {
             this.loadClientes();
             this.showModal = false;
+            this.toastService.showSuccess('Cliente creado correctamente.');
           }
           this.cdr.detectChanges();
         },
         error: (err) => {
           this.saving = false;
           this.cdr.detectChanges();
-          alert('Error al crear el cliente: ' + (err.error?.message || err.message));
+          this.toastService.showError('Error al crear el cliente: ' + (err.error?.message || err.message));
         }
       });
     }
@@ -405,6 +412,7 @@ export class UsersComponent implements OnInit {
             this.loadEmpleados();
             this.showDeleteModal = false;
             this.empleadoToDelete = null;
+            this.toastService.showSuccess('Empleado eliminado correctamente.');
           }
           this.cdr.detectChanges();
         },
@@ -413,7 +421,7 @@ export class UsersComponent implements OnInit {
           this.showDeleteModal = false;
           this.empleadoToDelete = null;
           this.cdr.detectChanges();
-          alert('Error al eliminar el empleado: ' + (err.error?.message || err.message));
+          this.toastService.showError('Error al eliminar el empleado: ' + (err.error?.message || err.message));
         }
       });
     } else {
@@ -428,6 +436,7 @@ export class UsersComponent implements OnInit {
             this.loadClientes();
             this.showDeleteModal = false;
             this.clienteToDelete = null;
+            this.toastService.showSuccess('Cliente eliminado correctamente.');
           }
           this.cdr.detectChanges();
         },
@@ -436,7 +445,7 @@ export class UsersComponent implements OnInit {
           this.showDeleteModal = false;
           this.clienteToDelete = null;
           this.cdr.detectChanges();
-          alert('Error al eliminar el cliente: ' + (err.error?.message || err.message));
+          this.toastService.showError('Error al eliminar el cliente: ' + (err.error?.message || err.message));
         }
       });
     }

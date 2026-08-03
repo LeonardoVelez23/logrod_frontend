@@ -1,0 +1,31 @@
+<div class="toast-container">
+  <div 
+    *ngFor="let t of toastService.toasts()" 
+    class="toast-card" 
+    [ngClass]="'toast-' + t.type"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="true"
+  >
+    <!-- Icono Descriptivo según el tipo de Toast -->
+    <span class="toast-icon">
+      <i *ngIf="t.type === 'success'" class="bi bi-check-circle-fill"></i>
+      <i *ngIf="t.type === 'danger'" class="bi bi-x-circle-fill"></i>
+      <i *ngIf="t.type === 'warning'" class="bi bi-exclamation-triangle-fill"></i>
+      <i *ngIf="t.type === 'info'" class="bi bi-info-circle-fill"></i>
+    </span>
+
+    <!-- Mensaje -->
+    <span class="toast-message">{{ t.message }}</span>
+
+    <!-- Botón de Cerrar (X) -->
+    <button 
+      class="toast-close" 
+      (click)="toastService.remove(t.id)" 
+      type="button" 
+      title="Cerrar notificación"
+    >
+      &times;
+    </button>
+  </div>
+</div>

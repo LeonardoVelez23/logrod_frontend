@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService, Producto, Categoria } from '../../../services/product.service';
 import { ModalComponent } from '../../../components/modal/modal.component';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-products',
@@ -15,6 +16,8 @@ import { ModalComponent } from '../../../components/modal/modal.component';
 export class ProductsComponent implements OnInit {
   private productService = inject(ProductService);
   private cdr = inject(ChangeDetectorRef); // Inyectar ChangeDetectorRef para forzar actualización de la UI
+  private toastService = inject(ToastService);
+
 
   productos: Producto[] = [];
   categorias: Categoria[] = [];
@@ -139,19 +142,19 @@ export class ProductsComponent implements OnInit {
   onSubmit() {
     // Validaciones básicas de negocio en el cliente
     if (!this.productoForm.codigo.trim() || !this.productoForm.nombre.trim()) {
-      alert('El código y el nombre del producto son obligatorios.');
+      this.toastService.showWarning('El código y el nombre del producto son obligatorios.');
       return;
     }
     if (this.productoForm.precio <= 0) {
-      alert('El precio debe ser un número mayor a 0.');
+      this.toastService.showWarning('El precio debe ser un número mayor a 0.');
       return;
     }
     if (this.productoForm.cantidad_disponible < 0) {
-      alert('La cantidad disponible no puede ser negativa.');
+      this.toastService.showWarning('La cantidad disponible no puede ser negativa.');
       return;
     }
     if (!this.productoForm.categoria_id) {
-      alert('Debe seleccionar una categoría para el producto.');
+      this.toastService.showWarning('Debe seleccionar una categoría para el producto.');
       return;
     }
 
@@ -172,10 +175,11 @@ export class ProductsComponent implements OnInit {
           if (response.success) {
             this.loadProductos();
             this.closeModal();
+            this.toastService.showSuccess('Producto actualizado correctamente.');
           }
         },
         error: (err) => {
-          alert('Error al actualizar el producto: ' + (err.error?.message || err.message));
+          this.toastService.showError('Error al actualizar el producto: ' + (err.error?.message || err.message));
         }
       });
     } else {
@@ -185,10 +189,11 @@ export class ProductsComponent implements OnInit {
           if (response.success) {
             this.loadProductos();
             this.closeModal();
+            this.toastService.showSuccess('Producto creado correctamente.');
           }
         },
         error: (err) => {
-          alert('Error al crear el producto: ' + (err.error?.message || err.message));
+          this.toastService.showError('Error al crear el producto: ' + (err.error?.message || err.message));
         }
       });
     }
@@ -220,10 +225,11 @@ export class ProductsComponent implements OnInit {
         if (response.success) {
           this.loadProductos();
           this.closeDeleteModal();
+          this.toastService.showSuccess('Producto eliminado correctamente.');
         }
       },
       error: (err) => {
-        alert('Error al eliminar el producto: ' + (err.error?.message || err.message));
+        this.toastService.showError('Error al eliminar el producto: ' + (err.error?.message || err.message));
         this.closeDeleteModal();
       }
     });

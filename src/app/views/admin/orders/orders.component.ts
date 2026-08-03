@@ -7,6 +7,8 @@ import { ClientService, Cliente } from '../../../services/client.service';
 import { ProductService, Producto } from '../../../services/product.service';
 import { AuthService } from '../../../services/auth.service';
 import { ModalComponent } from '../../../components/modal/modal.component';
+import { ToastService } from '../../../services/toast.service';
+import { PagoService } from '../../../services/pago.service';
 
 @Component({
   selector: 'app-orders',
@@ -23,6 +25,9 @@ export class OrdersComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private productService = inject(ProductService);
   public authService = inject(AuthService);
+  private toastService = inject(ToastService);
+  private pagoService = inject(PagoService);
+
 
   pedidos: Pedido[] = [];
   empleados: Empleado[] = [];
@@ -47,6 +52,13 @@ export class OrdersComponent implements OnInit {
     precio_unitario: number;
     subtotal: number;
   }> = [];
+
+  // Variables para la pasarela de cobro del pedido
+  showPaymentModal: boolean = false;
+  pedidoPorPagar: Pedido | null = null;
+  paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia' = 'efectivo';
+  paymentReference: string = '';
+  isProcessingPayment: boolean = false;
   
   // Para registrar un timer que actualice los minutos transcurridos en tiempo real
   private timerId: any;
@@ -60,6 +72,7 @@ export class OrdersComponent implements OnInit {
       this.timerId = setInterval(() => {
         // Esto fuerza a Angular a ejecutar el change detection y recalcular los tiempos
         this.pedidos = [...this.pedidos];
+        this.cdr.detectChanges();
       }, 60000);
     }
   }
@@ -75,6 +88,7 @@ export class OrdersComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.pedidos = response.data;
+          this.cdr.detectChanges();
         }
       },
       error: (err) => {
@@ -91,6 +105,7 @@ export class OrdersComponent implements OnInit {
         next: (response) => {
           if (response.success) {
             this.empleados = response.data;
+            this.cdr.detectChanges();
           }
         },
         error: (err) => {
@@ -138,10 +153,11 @@ export class OrdersComponent implements OnInit {
             if (this.selectedPedido && this.selectedPedido.id === pedido.id) {
               this.selectedPedido = response.data;
             }
+            this.toastService.showSuccess('Pedido en preparación.');
           }
         },
         error: (err) => {
-          alert('Error al iniciar preparación: ' + (err.error?.message || err.message));
+          this.toastService.showError('Error al iniciar preparación: ' + (err.error?.message || err.message));
         }
       });
     }
@@ -157,30 +173,41 @@ export class OrdersComponent implements OnInit {
             if (this.selectedPedido && this.selectedPedido.id === pedido.id) {
               this.selectedPedido = response.data;
             }
+            this.toastService.showSuccess('Pedido marcado como listo.');
           }
         },
         error: (err) => {
-          alert('Error al marcar como listo: ' + (err.error?.message || err.message));
+          this.toastService.showError('Error al marcar como listo: ' + (err.error?.message || err.message));
         }
       });
     }
   }
 
-  // Entregar el pedido (Mueve a 'entregado' y lo retira del Kanban)
+  // Entregar el pedido (Mueve a 'entregado' y lo retira del Kanban, previa verificación/registro de pago)
   entregarPedido(pedido: Pedido) {
-    if (pedido.id) {
-      this.orderService.updatePedido(pedido.id, { estado: 'entregado' }).subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.loadPedidos();
-            this.closeDetail();
-          }
-        },
-        error: (err) => {
-          alert('Error al entregar pedido: ' + (err.error?.message || err.message));
+    if (!pedido.id) return;
+
+    // Verificar si ya existe un pago aprobado para este pedido
+    this.pagoService.getPagoByPedido(pedido.id).subscribe({
+      next: (response) => {
+        if (response.success && response.data && response.data.estado === 'aprobado') {
+          // Ya tiene pago aprobado, entregar directamente
+          this.ejecutarEntregaDirecta(pedido);
+        } else {
+          // El pago no está aprobado. Abrir pasarela de cobro
+          this.abrirModalPago(pedido);
         }
-      });
-    }
+      },
+      error: (err) => {
+        // Si no existe pago (devuelve 404), abrimos el modal de cobro
+        if (err.status === 404) {
+          this.abrirModalPago(pedido);
+        } else {
+          console.error('Error al verificar pago:', err);
+          this.toastService.showError('Error al verificar el estado de pago del pedido.');
+        }
+      }
+    });
   }
 
   // Cancelar el pedido
@@ -192,10 +219,11 @@ export class OrdersComponent implements OnInit {
             if (response.success) {
               this.loadPedidos();
               this.closeDetail();
+              this.toastService.showSuccess('Pedido cancelado.');
             }
           },
           error: (err) => {
-            alert('Error al cancelar pedido: ' + (err.error?.message || err.message));
+            this.toastService.showError('Error al cancelar pedido: ' + (err.error?.message || err.message));
           }
         });
       }
@@ -212,10 +240,11 @@ export class OrdersComponent implements OnInit {
         if (response.success) {
           this.loadPedidos();
           this.selectedPedido = response.data;
+          this.toastService.showSuccess('Empleado asignado correctamente.');
         }
       },
       error: (err) => {
-        alert('Error al asignar empleado: ' + (err.error?.message || err.message));
+        this.toastService.showError('Error al asignar empleado: ' + (err.error?.message || err.message));
       }
     });
   }
@@ -316,22 +345,22 @@ export class OrdersComponent implements OnInit {
 
   addItemToNewOrder() {
     if (!this.selectedProductId) {
-      alert('Seleccione un producto.');
+      this.toastService.showWarning('Seleccione un producto.');
       return;
     }
     if (this.selectedQuantity < 1) {
-      alert('La cantidad debe ser al menos 1.');
+      this.toastService.showWarning('La cantidad debe ser al menos 1.');
       return;
     }
 
     const producto = this.productosDisponibles.find(p => p.id === Number(this.selectedProductId));
     if (!producto || !producto.id) {
-      alert('Producto no válido.');
+      this.toastService.showError('Producto no válido.');
       return;
     }
 
     if (this.selectedQuantity > producto.cantidad_disponible) {
-      alert(`La cantidad excede el stock disponible (${producto.cantidad_disponible}).`);
+      this.toastService.showWarning(`La cantidad excede el stock disponible (${producto.cantidad_disponible}).`);
       return;
     }
 
@@ -341,7 +370,7 @@ export class OrdersComponent implements OnInit {
     if (indexExistente !== -1) {
       const nuevaCantidad = this.newOrderItems[indexExistente].cantidad + Number(this.selectedQuantity);
       if (nuevaCantidad > producto.cantidad_disponible) {
-        alert(`La cantidad total en el pedido (${nuevaCantidad}) excede el stock disponible (${producto.cantidad_disponible}).`);
+        this.toastService.showWarning(`La cantidad total en el pedido (${nuevaCantidad}) excede el stock disponible (${producto.cantidad_disponible}).`);
         return;
       }
       this.newOrderItems[indexExistente].cantidad = nuevaCantidad;
@@ -358,10 +387,12 @@ export class OrdersComponent implements OnInit {
     }
 
     this.selectedQuantity = 1;
+    this.toastService.showSuccess('Producto agregado al borrador.');
   }
 
   removeItemFromNewOrder(index: number) {
     this.newOrderItems.splice(index, 1);
+    this.toastService.showInfo('Producto removido del borrador.');
   }
 
   getNewOrderTotal(): number {
@@ -370,11 +401,11 @@ export class OrdersComponent implements OnInit {
 
   guardarNuevoPedido() {
     if (!this.newOrderClienteId) {
-      alert('Debe seleccionar un cliente.');
+      this.toastService.showWarning('Debe seleccionar un cliente.');
       return;
     }
     if (this.newOrderItems.length === 0) {
-      alert('Debe agregar al menos un producto al pedido.');
+      this.toastService.showWarning('Debe agregar al menos un producto al pedido.');
       return;
     }
 
@@ -409,7 +440,7 @@ export class OrdersComponent implements OnInit {
       next: (res) => {
         this.isSubmittingOrder = false;
         if (res.success) {
-          alert('¡Pedido registrado con éxito!');
+          this.toastService.showSuccess('¡Pedido registrado con éxito!');
           this.closeCreateModal();
           this.loadPedidos();
         }
@@ -417,7 +448,95 @@ export class OrdersComponent implements OnInit {
       error: (err) => {
         this.isSubmittingOrder = false;
         console.error('Error al registrar pedido:', err);
-        alert('Error al registrar el pedido: ' + (err.error?.message || err.message));
+        this.toastService.showError('Error al registrar el pedido: ' + (err.error?.message || err.message));
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // Abrir pasarela de cobro
+  abrirModalPago(pedido: Pedido) {
+    this.pedidoPorPagar = pedido;
+    this.paymentMethod = 'efectivo';
+    this.paymentReference = '';
+    this.showPaymentModal = true;
+    this.cdr.detectChanges();
+  }
+
+  // Cerrar pasarela de cobro
+  closePaymentModal() {
+    this.showPaymentModal = false;
+    this.pedidoPorPagar = null;
+    this.cdr.detectChanges();
+  }
+
+  // Entrega directa de pedidos ya cobrados
+  ejecutarEntregaDirecta(pedido: Pedido) {
+    if (pedido.id) {
+      this.orderService.updatePedido(pedido.id, { estado: 'entregado' }).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.loadPedidos();
+            this.closeDetail();
+            this.toastService.showSuccess('Pedido entregado correctamente (Pago ya aprobado).');
+          }
+        },
+        error: (err) => {
+          this.toastService.showError('Error al entregar pedido: ' + (err.error?.message || err.message));
+        }
+      });
+    }
+  }
+
+  // Procesar cobro y transición de estado del pedido a entregado
+  procesarPagoYEntregar() {
+    if (!this.pedidoPorPagar || !this.pedidoPorPagar.id) return;
+
+    if ((this.paymentMethod === 'tarjeta' || this.paymentMethod === 'transferencia') && !this.paymentReference.trim()) {
+      this.toastService.showWarning('Debe ingresar un número de referencia para este método de pago.');
+      return;
+    }
+
+    this.isProcessingPayment = true;
+    const nowStr = new Date().toISOString();
+
+    const payloadPago = {
+      pedido_id: this.pedidoPorPagar.id,
+      fecha: nowStr,
+      valor: Number(this.pedidoPorPagar.valor_total),
+      metodo_pago: this.paymentMethod,
+      numero_referencia: this.paymentReference.trim() || null,
+      estado: 'aprobado' as const
+    };
+
+    // 1. Crear el registro del Pago
+    this.pagoService.createPago(payloadPago).subscribe({
+      next: (resPago) => {
+        if (resPago.success) {
+          // 2. Transicionar el pedido a 'entregado'
+          this.orderService.updatePedido(this.pedidoPorPagar!.id!, { estado: 'entregado' }).subscribe({
+            next: (resPedido) => {
+              this.isProcessingPayment = false;
+              if (resPedido.success) {
+                this.toastService.showSuccess('¡Cobro registrado y pedido entregado con éxito!');
+                this.closePaymentModal();
+                this.closeDetail();
+                this.loadPedidos();
+              }
+            },
+            error: (err) => {
+              this.isProcessingPayment = false;
+              this.toastService.showError('Pago registrado, pero falló al actualizar el pedido: ' + (err.error?.message || err.message));
+              this.cdr.detectChanges();
+            }
+          });
+        }
+      },
+      error: (err) => {
+        this.isProcessingPayment = false;
+        console.error('Error al procesar pago:', err);
+        this.toastService.showError('Error al procesar pago: ' + (err.error?.message || err.message));
+        this.cdr.detectChanges();
       }
     });
   }

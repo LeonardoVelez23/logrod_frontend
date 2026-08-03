@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MainLayout } from '../main-layout/main-layout.component';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -15,6 +16,8 @@ import { AuthService } from '../../services/auth.service';
 export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private toastService = inject(ToastService);
+
 
   // Controlar el cambio de pestaña (Login / Registro)
   isLoginMode = signal(true);
@@ -97,7 +100,7 @@ export class LoginComponent {
     this.authService.register(clientPayload).subscribe({
       next: (response) => {
         if (response.success) {
-          alert('¡Registro exitoso! Ahora puedes iniciar sesión con tus credenciales.');
+          this.toastService.showSuccess('¡Registro exitoso! Ahora puedes iniciar sesión con tus credenciales.');
           this.isLoginMode.set(true);
           this.loginData.email = this.registerData.correo_electronico;
           this.errorMessage.set(null);

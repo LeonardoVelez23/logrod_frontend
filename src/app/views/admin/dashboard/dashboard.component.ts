@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OrderService, Pedido } from '../../../services/order.service';
 import { ProductService, Producto } from '../../../services/product.service';
@@ -15,6 +15,7 @@ export class DashboardComponent implements OnInit {
   private orderService = inject(OrderService);
   private productService = inject(ProductService);
   private dashboardService = inject(DashboardService);
+  private cdr = inject(ChangeDetectorRef);
 
   pedidos: Pedido[] = [];
   productos: Producto[] = [];
@@ -83,6 +84,7 @@ export class DashboardComponent implements OnInit {
             this.statusCounts.listo;
 
           this.popularProducts = stats.popularProducts;
+          this.cdr.detectChanges();
         }
       },
       error: (err) => {
@@ -96,6 +98,7 @@ export class DashboardComponent implements OnInit {
         if (orderRes.success) {
           this.pedidos = orderRes.data;
           this.recentOrders = this.pedidos.slice(0, 5); // Tomar solo los últimos 5 registros
+          this.cdr.detectChanges();
         }
       },
       error: (err) => {
@@ -109,6 +112,7 @@ export class DashboardComponent implements OnInit {
         if (productRes.success) {
           this.productos = productRes.data;
           this.totalProductsCount = this.productos.length;
+          this.cdr.detectChanges();
         }
       },
       error: (err) => {
