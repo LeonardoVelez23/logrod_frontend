@@ -53,6 +53,8 @@ export class OrderHistoryComponent implements OnInit {
   selectedPedido: Pedido | null = null;
   showDetailModal: boolean = false;
 
+  loadingData: boolean = false;
+
   ngOnInit() {
     const today = new Date();
     this.selectedMonth = today.getMonth();
@@ -63,6 +65,7 @@ export class OrderHistoryComponent implements OnInit {
   }
 
   loadData() {
+    this.loadingData = true;
     this.orderService.getPedidos().subscribe({
       next: (orderRes) => {
         if (orderRes.success) {
@@ -71,6 +74,7 @@ export class OrderHistoryComponent implements OnInit {
           // Cargar los pagos registrados para cruzarlos
           this.pagoService.getAllPagos().subscribe({
             next: (pagoRes) => {
+              this.loadingData = false;
               if (pagoRes.success) {
                 this.pagos = pagoRes.data;
 
@@ -88,15 +92,19 @@ export class OrderHistoryComponent implements OnInit {
               }
             },
             error: (err) => {
+              this.loadingData = false;
               console.error('Error al cargar pagos en historial:', err);
               this.toastService.showError('Error al cargar la información de pagos.');
+              this.cdr.detectChanges();
             }
           });
         }
       },
       error: (err) => {
+        this.loadingData = false;
         console.error('Error al cargar pedidos en historial:', err);
         this.toastService.showError('Error al cargar el historial de pedidos.');
+        this.cdr.detectChanges();
       }
     });
   }

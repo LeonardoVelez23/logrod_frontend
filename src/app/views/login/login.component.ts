@@ -70,8 +70,8 @@ export class LoginComponent {
           // Redirigir según el rol del usuario de la base de datos
           if (response.user.rol === 'cliente') {
             this.router.navigate(['/catalog']);
-          } else if (response.user.rol === 'mesero') {
-            // El mesero no tiene acceso al Dashboard, su vista principal es Gestión de Pedidos
+          } else if (response.user.rol === 'mesero' || response.user.rol === 'cocinero') {
+            // El mesero y el cocinero no tienen acceso al Dashboard, su vista principal es Gestión de Pedidos
             this.router.navigate(['/admin/orders']);
           } else {
             this.router.navigate(['/admin/dashboard']);

@@ -51,8 +51,8 @@
         </button>
       </div>
       <ul class="sidebar-menu">
-        <!-- El mesero no tiene acceso al Dashboard -->
-        <li *ngIf="currentRole !== 'mesero'">
+        <!-- El mesero y el cocinero no tienen acceso al Dashboard -->
+        <li *ngIf="currentRole !== 'mesero' && currentRole !== 'cocinero'">
           <a routerLink="/admin/dashboard" routerLinkActive="active" class="sidebar-link" [title]="sidebarCollapsed() ? 'Dashboard' : ''">
             <span class="material-symbols-outlined">dashboard</span>
             <span class="link-label">Dashboard</span>
@@ -64,8 +64,8 @@
             <span class="link-label">Gestión de Pedidos</span>
           </a>
         </li>
-        <!-- El mesero no tiene acceso al Historial de Ventas -->
-        <li *ngIf="currentRole !== 'mesero'">
+        <!-- El mesero y el cocinero no tienen acceso al Historial de Ventas -->
+        <li *ngIf="currentRole !== 'mesero' && currentRole !== 'cocinero'">
           <a routerLink="/admin/historial" routerLinkActive="active" class="sidebar-link" [title]="sidebarCollapsed() ? 'Historial de Ventas' : ''">
             <span class="material-symbols-outlined">history</span>
             <span class="link-label">Historial de Ventas</span>

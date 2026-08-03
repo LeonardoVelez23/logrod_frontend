@@ -23,7 +23,7 @@ export const routes: Routes = [
       {
         path: 'admin/dashboard',
         component: Dashboard,
-        canActivate: [roleGuard(['admin', 'empleado', 'cajero', 'cocinero'])]
+        canActivate: [roleGuard(['admin', 'empleado', 'cajero'])]
       },
       {
         path: 'admin/products',
@@ -38,7 +38,7 @@ export const routes: Routes = [
       {
         path: 'admin/historial',
         component: OrderHistoryComponent,
-        canActivate: [roleGuard(['admin', 'empleado', 'cajero', 'cocinero'])]
+        canActivate: [roleGuard(['admin', 'empleado', 'cajero'])]
       },
       {
         path: 'admin/usuarios',

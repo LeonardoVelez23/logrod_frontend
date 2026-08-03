@@ -70,6 +70,8 @@ export class OrdersComponent implements OnInit {
   // Modal de confirmación para cancelar pedido
   showCancelConfirmModal: boolean = false;
   pedidoPorCancelar: Pedido | null = null;
+  isLoadingPedidos: boolean = false;
+  isCancellingOrder: boolean = false;
   
   // Para registrar un timer que actualice los minutos transcurridos en tiempo real
   private timerId: any;
@@ -95,15 +97,19 @@ export class OrdersComponent implements OnInit {
   }
 
   loadPedidos() {
+    this.isLoadingPedidos = true;
     this.orderService.getPedidos().subscribe({
       next: (response) => {
+        this.isLoadingPedidos = false;
         if (response.success) {
           this.pedidos = response.data;
           this.cdr.detectChanges();
         }
       },
       error: (err) => {
+        this.isLoadingPedidos = false;
         console.error('Error al cargar pedidos:', err);
+        this.cdr.detectChanges();
       }
     });
   }
@@ -129,6 +135,28 @@ export class OrdersComponent implements OnInit {
   // El mesero solo puede ver el tablero y crear pedidos, no mover el estado de un pedido
   get puedeGestionarEstado(): boolean {
     return this.authService.getCurrentRole() !== 'mesero';
+  }
+
+  // Entregar implica cobrar (abre la pasarela de pago); eso es de cajero/mesero/admin, no del cocinero
+  get puedeEntregar(): boolean {
+    const rol = this.authService.getCurrentRole();
+    return rol !== 'mesero' && rol !== 'cocinero';
+  }
+
+  // El cocinero no crea pedidos, solo los prepara
+  get puedeCrearPedidos(): boolean {
+    return this.authService.getCurrentRole() !== 'cocinero';
+  }
+
+  // El cocinero no puede cancelar pedidos
+  get puedeCancelar(): boolean {
+    const rol = this.authService.getCurrentRole();
+    return rol !== 'cocinero';
+  }
+
+  // El cocinero no necesita ver precios, pagos, ni datos de contacto del cliente
+  get esCocinero(): boolean {
+    return this.authService.getCurrentRole() === 'cocinero';
   }
 
   // Filtrar pedidos por estado y término de búsqueda
@@ -240,8 +268,10 @@ export class OrdersComponent implements OnInit {
     const pedido = this.pedidoPorCancelar;
     if (!pedido?.id) return;
 
+    this.isCancellingOrder = true;
     this.orderService.updatePedido(pedido.id, { estado: 'cancelado' }).subscribe({
       next: (response) => {
+        this.isCancellingOrder = false;
         if (response.success) {
           this.showCancelConfirmModal = false;
           this.pedidoPorCancelar = null;
@@ -251,7 +281,9 @@ export class OrdersComponent implements OnInit {
         }
       },
       error: (err) => {
+        this.isCancellingOrder = false;
         this.toastService.showError('Error al cancelar pedido: ' + (err.error?.message || err.message));
+        this.cdr.detectChanges();
       }
     });
   }

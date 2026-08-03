@@ -18,12 +18,13 @@
         />
       </div>
       
-      <button class="btn btn-primary create-order-btn" (click)="openCreateModal()" title="Registrar un nuevo pedido">
+      <button *ngIf="puedeCrearPedidos" class="btn btn-primary create-order-btn" (click)="openCreateModal()" title="Registrar un nuevo pedido">
         <i class="bi bi-plus-lg"></i> + Nuevo Pedido
       </button>
 
-      <button class="btn btn-secondary refresh-btn" (click)="loadPedidos()" title="Recargar pedidos">
-        <i class="bi bi-arrow-clockwise"></i> Recargar
+      <button class="btn btn-secondary refresh-btn" [disabled]="isLoadingPedidos" (click)="loadPedidos()" title="Recargar pedidos">
+        <span class="btn-spinner me-1" *ngIf="isLoadingPedidos"></span>
+        <i class="bi bi-arrow-clockwise" *ngIf="!isLoadingPedidos"></i> Recargar
       </button>
     </div>
   </div>
@@ -200,7 +201,7 @@
             </div>
             
             <button
-              *ngIf="puedeGestionarEstado"
+              *ngIf="puedeEntregar"
               class="btn-deliver"
               (click)="entregarPedido(pedido); $event.stopPropagation()"
             >
@@ -233,15 +234,15 @@
             <span class="detail-label">Nombre:</span>
             <span class="detail-val">{{ selectedPedido.cliente?.nombres }} {{ selectedPedido.cliente?.apellidos }}</span>
           </div>
-          <div class="detail-row">
+          <div class="detail-row" *ngIf="!esCocinero">
             <span class="detail-label">Identificación:</span>
             <span class="detail-val">{{ selectedPedido.cliente?.identificacion }}</span>
           </div>
-          <div class="detail-row">
+          <div class="detail-row" *ngIf="!esCocinero">
             <span class="detail-label">Correo:</span>
             <span class="detail-val">{{ selectedPedido.cliente?.correo_electronico }}</span>
           </div>
-          <div class="detail-row" *ngIf="selectedPedido.cliente?.telefono">
+          <div class="detail-row" *ngIf="!esCocinero && selectedPedido.cliente?.telefono">
             <span class="detail-label">Teléfono:</span>
             <span class="detail-val">{{ selectedPedido.cliente?.telefono }}</span>
           </div>
@@ -257,21 +258,21 @@
               <tr>
                 <th>Cant.</th>
                 <th>Producto</th>
-                <th class="text-end">Precio U.</th>
-                <th class="text-end">Subtotal</th>
+                <th class="text-end" *ngIf="!esCocinero">Precio U.</th>
+                <th class="text-end" *ngIf="!esCocinero">Subtotal</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let det of selectedPedido.detalles">
                 <td class="qty-col">{{ det.cantidad }}</td>
                 <td>{{ det.producto?.nombre }}</td>
-                <td class="text-end">${{ det.precio_unitario | number:'1.2-2' }}</td>
-                <td class="text-end">${{ det.subtotal | number:'1.2-2' }}</td>
+                <td class="text-end" *ngIf="!esCocinero">${{ det.precio_unitario | number:'1.2-2' }}</td>
+                <td class="text-end" *ngIf="!esCocinero">${{ det.subtotal | number:'1.2-2' }}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="order-total-bar">
+        <div class="order-total-bar" *ngIf="!esCocinero">
           <span>Total a Pagar</span>
           <span class="total-price">${{ selectedPedido.valor_total | number:'1.2-2' }}</span>
         </div>
@@ -376,13 +377,14 @@
         (click)="guardarAsignacion()"
         [disabled]="isSavingAsignacion"
       >
-        <i class="bi bi-person-check-fill"></i>
+        <span class="btn-spinner me-1" *ngIf="isSavingAsignacion"></span>
+        <i class="bi bi-person-check-fill" *ngIf="!isSavingAsignacion"></i>
         {{ isSavingAsignacion ? 'Guardando...' : 'Guardar Asignación' }}
       </button>
       
       <button
         class="btn btn-danger"
-        *ngIf="puedeGestionarEstado && selectedPedido.estado !== 'entregado' && selectedPedido.estado !== 'cancelado'"
+        *ngIf="puedeCancelar && selectedPedido.estado !== 'entregado' && selectedPedido.estado !== 'cancelado'"
         (click)="solicitarCancelacion(selectedPedido)"
       >
         Cancelar Pedido
@@ -406,7 +408,7 @@
 
       <button
         class="btn btn-primary"
-        *ngIf="puedeGestionarEstado && selectedPedido.estado === 'listo'"
+        *ngIf="puedeEntregar && selectedPedido.estado === 'listo'"
         (click)="entregarPedido(selectedPedido)"
       >
         Entregar Pedido <i class="bi bi-arrow-right-short"></i>
@@ -550,6 +552,7 @@
         [disabled]="isSubmittingOrder || newOrderItems.length === 0 || !newOrderClienteId"
         (click)="guardarNuevoPedido()"
       >
+        <span class="btn-spinner me-1" *ngIf="isSubmittingOrder"></span>
         <span *ngIf="!isSubmittingOrder"><i class="bi bi-floppy-fill me-1"></i> Registrar Pedido</span>
         <span *ngIf="isSubmittingOrder">Guardando...</span>
       </button>
@@ -646,6 +649,7 @@
         [disabled]="isProcessingPayment"
         style="background-color: var(--success); border-color: var(--success); font-weight: 600;"
       >
+        <span class="btn-spinner me-1" *ngIf="isProcessingPayment"></span>
         {{ isProcessingPayment ? 'Procesando...' : 'Registrar Pago y Entregar' }}
       </button>
     </div>
@@ -670,8 +674,9 @@
       <button class="btn btn-secondary" (click)="cerrarCancelConfirm()">
         ← Volver
       </button>
-      <button class="btn btn-danger" (click)="confirmarCancelacion()">
-        <i class="bi bi-trash-fill me-1"></i> Sí, cancelar pedido
+      <button class="btn btn-danger" [disabled]="isCancellingOrder" (click)="confirmarCancelacion()">
+        <span class="btn-spinner me-1" *ngIf="isCancellingOrder"></span>
+        <i class="bi bi-trash-fill me-1" *ngIf="!isCancellingOrder"></i> {{ isCancellingOrder ? 'Cancelando...' : 'Sí, cancelar pedido' }}
       </button>
     </div>
   </div>

@@ -5,7 +5,10 @@
       <p class="view-subtitle text-secondary">Consulte las ventas registradas por día, métodos de pago e ingresos consolidados.</p>
     </div>
     <div class="col-md-4 text-md-end">
-      <button class="btn btn-outline-primary" (click)="loadData()"><i class="bi bi-arrow-clockwise"></i> Recargar Datos</button>
+      <button class="btn btn-outline-primary" [disabled]="loadingData" (click)="loadData()">
+        <span class="btn-spinner me-1" *ngIf="loadingData"></span>
+        <i class="bi bi-arrow-clockwise" *ngIf="!loadingData"></i> {{ loadingData ? 'Cargando...' : 'Recargar Datos' }}
+      </button>
     </div>
   </div>
 
