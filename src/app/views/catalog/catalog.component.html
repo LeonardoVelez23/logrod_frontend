@@ -1,1 +1,69 @@
-<p>Catalog works</p>
+<div class="catalog-container animate-fade-in">
+  <div class="view-header">
+    <div>
+      <h2>Menú</h2>
+      <p>Explora los platos y bebidas disponibles en Sabor Politécnico.</p>
+    </div>
+  </div>
+
+  <!-- Barra de Filtros -->
+  <div class="glass-card controls-bar">
+    <div class="search-box">
+      <i class="bi bi-search search-icon"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Buscar por nombre o descripción..."
+        class="form-control search-input"
+      />
+    </div>
+
+    <div class="category-chips">
+      <button
+        class="chip"
+        [class.active]="!selectedCategoriaId"
+        (click)="selectedCategoriaId = ''"
+      >
+        Todas
+      </button>
+      <button
+        *ngFor="let cat of categorias"
+        class="chip"
+        [class.active]="selectedCategoriaId === cat.id.toString()"
+        (click)="selectedCategoriaId = cat.id.toString()"
+      >
+        {{ cat.nombre }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Grid de Productos -->
+  <div class="products-grid">
+    <div *ngFor="let prod of getProductosFiltrados()" class="product-card glass-card">
+      <div class="product-image-wrapper">
+        <img *ngIf="prod.imagen_url" [src]="prod.imagen_url" [alt]="prod.nombre" class="product-image" />
+        <div *ngIf="!prod.imagen_url" class="product-image product-image-empty">
+          <i class="bi bi-image"></i>
+        </div>
+        <span class="category-tag">{{ prod.categoria?.nombre || 'General' }}</span>
+      </div>
+
+      <div class="product-body">
+        <h3 class="product-name">{{ prod.nombre }}</h3>
+        <p class="product-desc" *ngIf="prod.descripcion">{{ prod.descripcion }}</p>
+
+        <div class="product-footer">
+          <span class="product-price">${{ prod.precio | number:'1.2-2' }}</span>
+          <span class="stock-badge" [ngClass]="prod.cantidad_disponible > 5 ? 'stock-ok' : 'stock-low'">
+            {{ prod.cantidad_disponible > 0 ? prod.cantidad_disponible + ' disponibles' : 'Agotado' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="getProductosFiltrados().length === 0" class="empty-catalog-msg">
+      <i class="bi bi-emoji-frown"></i>
+      <p>No se encontraron productos que coincidan con la búsqueda.</p>
+    </div>
+  </div>
+</div>

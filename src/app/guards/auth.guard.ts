@@ -44,9 +44,15 @@ export const roleGuard: (allowedRoles: string[]) => CanActivateFn = (allowedRole
       return true;
     }
 
-    // Redirigir al catálogo si no está autorizado
+    // Redirigir a la vista correspondiente si no está autorizado
     alert('No tienes permisos para acceder a esta sección.');
-    router.navigate(['/catalog']);
+    if (userRole === 'mesero' || userRole === 'cocinero') {
+      router.navigate(['/admin/orders']);
+    } else if (userRole === 'cliente') {
+      router.navigate(['/catalog']);
+    } else {
+      router.navigate(['/admin/dashboard']);
+    }
     return false;
   };
 };

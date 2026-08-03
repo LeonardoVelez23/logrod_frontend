@@ -1,0 +1,276 @@
+/* Contenedor general del historial */
+.history-view-container {
+  padding-bottom: 2rem;
+}
+
+.view-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+
+.view-subtitle {
+  font-size: 13.5px;
+  margin-bottom: 0;
+}
+
+/* Calendario */
+.calendar-card {
+  border-radius: var(--border-radius-md);
+}
+
+.month-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  background: transparent;
+  transition: all var(--transition-fast);
+}
+
+.btn-icon:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  color: var(--accent);
+}
+
+.calendar-weekdays-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+}
+
+.weekday {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  padding: 8px 0;
+}
+
+.calendar-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.calendar-day-cell {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-sm);
+  background-color: rgba(0, 0, 0, 0.015);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.calendar-day-cell:hover {
+  background-color: rgba(26, 54, 93, 0.05);
+  border-color: rgba(26, 54, 93, 0.1);
+}
+
+.calendar-day-cell.not-current-month {
+  opacity: 0.35;
+  background-color: transparent;
+  border-color: transparent;
+}
+
+/* Día con ventas registradas */
+.calendar-day-cell.day-has-sales {
+  border-color: rgba(46, 204, 113, 0.25);
+  background-color: rgba(46, 204, 113, 0.03);
+}
+
+.calendar-day-cell.day-has-sales .day-number {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Indicador check verde de ventas */
+.sales-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--success);
+  line-height: 1;
+}
+
+/* Día seleccionado */
+.calendar-day-cell.day-selected {
+  background-color: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+
+.calendar-day-cell.day-selected .day-number {
+  color: white !important;
+  font-weight: 700;
+}
+
+.calendar-day-cell.day-selected .sales-indicator {
+  color: white !important;
+}
+
+.day-number {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+/* Tarjeta del detalle diario */
+.day-details-card {
+  border-radius: var(--border-radius-md);
+}
+
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
+/* Tabla personalizada del historial */
+.custom-history-table {
+  font-size: 13px;
+}
+
+.custom-history-table thead th {
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+  border-bottom: 2px solid var(--border-color);
+  padding: 10px;
+}
+
+.custom-history-table tbody td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.order-id-cell {
+  white-space: nowrap;
+}
+
+.order-time {
+  font-size: 11px;
+}
+
+.client-name {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.prod-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.prod-tag-list .badge {
+  font-size: 10px;
+  padding: 4px 6px;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.price-cell {
+  font-size: 13.5px;
+  color: var(--accent);
+}
+
+/* Fila de pedido cancelado */
+.row-cancelled {
+  opacity: 0.6;
+}
+
+.row-cancelled .price-cell {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.row-cancelled .client-name {
+  text-decoration: line-through;
+}
+
+/* KPI boxes inferiores para resumen de cobro */
+.kpi-box {
+  border-radius: var(--border-radius-sm);
+  transition: transform 0.15s ease;
+}
+
+.kpi-box:hover {
+  transform: translateY(-2px);
+}
+
+.kpi-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.kpi-val {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cash-kpi {
+  background-color: rgba(46, 204, 113, 0.08);
+  border: 1px solid rgba(46, 204, 113, 0.15);
+}
+
+.transfer-kpi {
+  background-color: rgba(241, 196, 15, 0.08);
+  border: 1px solid rgba(241, 196, 15, 0.15);
+}
+
+.card-kpi {
+  background-color: rgba(52, 152, 219, 0.08);
+  border: 1px solid rgba(52, 152, 219, 0.15);
+}
+
+.total-kpi {
+  background-color: rgba(26, 54, 93, 0.08);
+  border: 1px solid rgba(26, 54, 93, 0.15);
+}
+
+/* Estilos de los detalles dentro del Modal */
+.detail-box {
+  background-color: rgba(0,0,0,0.015);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 14px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px dashed rgba(0,0,0,0.06);
+  font-size: 13.5px;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  color: var(--text-muted);
+}
+
+.detail-val {
+  color: var(--text-primary);
+  text-align: right;
+}

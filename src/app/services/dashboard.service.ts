@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../config/api.config';
 
@@ -35,8 +35,12 @@ export interface DashboardStats {
 export class DashboardService {
   private http = inject(HttpClient);
 
-  // Obtener las estadísticas consolidadas del backend para el panel de administración
-  getStats(): Observable<{ success: boolean; data: DashboardStats }> {
-    return this.http.get<{ success: boolean; data: DashboardStats }>(`${API_BASE_URL}/pedidos/stats`);
+  // Obtener las estadísticas consolidadas del backend para el panel de administración.
+  // desde/hasta son opcionales (formato YYYY-MM-DD); sin ellos trae el histórico completo.
+  getStats(desde?: string, hasta?: string): Observable<{ success: boolean; data: DashboardStats }> {
+    let params = new HttpParams();
+    if (desde) params = params.set('desde', desde);
+    if (hasta) params = params.set('hasta', hasta);
+    return this.http.get<{ success: boolean; data: DashboardStats }>(`${API_BASE_URL}/pedidos/stats`, { params });
   }
 }

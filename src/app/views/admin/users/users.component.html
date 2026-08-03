@@ -1,0 +1,353 @@
+<div class="users-container animate-fade-in">
+  <!-- Cabecera de la Vista -->
+  <div class="view-header">
+    <div>
+      <h2>Control de Usuarios</h2>
+      <p>Administra empleados y clientes, sus datos de contacto y su rol de acceso.</p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-bar">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'empleados'"
+      (click)="setActiveTab('empleados')"
+    >
+      <i class="bi bi-person-badge-fill"></i> Empleados
+      <span class="tab-count">{{ empleados.length }}</span>
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'clientes'"
+      (click)="setActiveTab('clientes')"
+    >
+      <i class="bi bi-people-fill"></i> Clientes
+      <span class="tab-count">{{ clientes.length }}</span>
+    </button>
+  </div>
+
+  <!-- Barra de Filtros y Acciones -->
+  <div class="glass-card controls-bar">
+    <div class="filter-group">
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Buscar por nombre, correo o identificación..."
+          class="form-control search-input"
+        />
+      </div>
+    </div>
+
+    <button class="btn btn-primary add-user-btn" (click)="openAddModal()">
+      <i class="bi bi-plus-lg"></i> {{ activeTab === 'empleados' ? 'Nuevo Empleado' : 'Nuevo Cliente' }}
+    </button>
+  </div>
+
+  <!-- Tabla de Empleados -->
+  <div class="glass-card table-card" *ngIf="activeTab === 'empleados'">
+    <div class="table-responsive custom-scrollbar">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Identificación</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+            <th>Cargo</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let emp of getEmpleadosFiltrados()" class="user-row">
+            <td class="code-col"><code>{{ emp.identificacion }}</code></td>
+            <td>
+              <span class="user-title">{{ emp.nombres }} {{ emp.apellidos }}</span>
+            </td>
+            <td>{{ emp.correo_electronico }}</td>
+            <td>{{ emp.telefono || '—' }}</td>
+            <td>
+              <div class="cargo-cell">
+                <span class="badge" [ngClass]="esAdmin(emp.cargo) ? 'badge-success' : 'badge-info'">
+                  {{ cargoMostrar(emp.cargo) }}
+                </span>
+                <span class="user-badge-you" *ngIf="esUsuarioActual(emp.id)">Tú</span>
+              </div>
+            </td>
+            <td class="text-end">
+              <div class="actions-wrapper">
+                <button class="action-btn-tbl edit-tbl-btn" (click)="openEditModal(emp)" title="Editar Empleado">
+                  <i class="bi bi-pencil-fill"></i>
+                </button>
+                <button
+                  class="action-btn-tbl delete-tbl-btn"
+                  (click)="openDeleteModal(emp)"
+                  [disabled]="esUsuarioActual(emp.id)"
+                  [title]="esUsuarioActual(emp.id) ? 'No puedes eliminar tu propio usuario' : 'Eliminar Empleado'"
+                >
+                  <i class="bi bi-trash-fill"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="getEmpleadosFiltrados().length === 0">
+            <td colspan="6" class="text-center py-4 text-muted">
+              No se encontraron empleados que coincidan con la búsqueda.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Tabla de Clientes -->
+  <div class="glass-card table-card" *ngIf="activeTab === 'clientes'">
+    <div class="table-responsive custom-scrollbar">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Identificación</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+            <th class="text-center">Tipo</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cli of getClientesFiltrados()" class="user-row">
+            <td class="code-col"><code>{{ cli.identificacion }}</code></td>
+            <td>
+              <span class="user-title">{{ cli.nombres }} {{ cli.apellidos }}</span>
+            </td>
+            <td>{{ cli.correo_electronico }}</td>
+            <td>{{ cli.telefono || '—' }}</td>
+            <td class="text-center">
+              <span class="badge badge-info">{{ cli.tipo_cliente || 'Persona externa' }}</span>
+            </td>
+            <td class="text-end">
+              <div class="actions-wrapper">
+                <button class="action-btn-tbl edit-tbl-btn" (click)="openEditModal(cli)" title="Editar Cliente">
+                  <i class="bi bi-pencil-fill"></i>
+                </button>
+                <button class="action-btn-tbl delete-tbl-btn" (click)="openDeleteModal(cli)" title="Eliminar Cliente">
+                  <i class="bi bi-trash-fill"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="getClientesFiltrados().length === 0">
+            <td colspan="6" class="text-center py-4 text-muted">
+              No se encontraron clientes que coincidan con la búsqueda.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal de Agregar/Editar Empleado -->
+  <app-modal 
+    [isOpen]="showModal && activeTab === 'empleados'" 
+    [title]="isEditMode ? 'Editar Empleado' : 'Nuevo Empleado'" 
+    size="lg"
+    (onClose)="closeModal()"
+  >
+    <form (ngSubmit)="onSubmit()" #empForm="ngForm" id="empForm" modal-body>
+      <div class="row g-3">
+        <div class="col-md-6 form-group">
+          <label class="form-label">Identificación *</label>
+          <input
+            type="text"
+            inputmode="numeric"
+            minlength="10"
+            maxlength="10"
+            [ngModel]="empleadoForm.identificacion"
+            (ngModelChange)="empleadoForm.identificacion = soloDigitos($event, 10)"
+            (keydown)="bloquearNoNumerico($event)"
+            name="identificacion"
+            required
+            class="form-control"
+          />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Correo Electrónico *</label>
+          <input type="email" [(ngModel)]="empleadoForm.correo_electronico" name="correo_electronico" required class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Nombres *</label>
+          <input type="text" [(ngModel)]="empleadoForm.nombres" name="nombres" required class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Apellidos *</label>
+          <input type="text" [(ngModel)]="empleadoForm.apellidos" name="apellidos" required class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Teléfono</label>
+          <input
+            type="text"
+            inputmode="numeric"
+            minlength="10"
+            maxlength="10"
+            [ngModel]="empleadoForm.telefono"
+            (ngModelChange)="empleadoForm.telefono = soloDigitos($event, 10)"
+            (keydown)="bloquearNoNumerico($event)"
+            name="telefono"
+            placeholder="Ej. 0987654321"
+            class="form-control"
+          />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Turno de Trabajo</label>
+          <select [(ngModel)]="empleadoForm.turno_trabajo" name="turno_trabajo" class="form-control">
+            <option value="">-- Sin especificar --</option>
+            <option value="Mañana">Mañana</option>
+            <option value="Tarde">Tarde</option>
+            <option value="Full time">Full time</option>
+          </select>
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Cargo</label>
+          <select [(ngModel)]="empleadoForm.cargo" name="cargo" class="form-control">
+            <option value="">-- Sin especificar --</option>
+            <option value="Mesero">Mesero</option>
+            <option value="Cocinero">Cocinero</option>
+            <option value="Cajero">Cajero</option>
+            <option value="Administrador">Administrador</option>
+          </select>
+          <small class="form-hint">"Administrador" otorga acceso completo al Panel Admin.</small>
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">{{ isEditMode ? 'Nueva Contraseña' : 'Contraseña *' }}</label>
+          <input type="password" [(ngModel)]="empleadoForm.contrasenia" name="contrasenia" [required]="!isEditMode" class="form-control" />
+          <small class="form-hint" *ngIf="isEditMode">Déjalo en blanco para mantener la contraseña actual.</small>
+        </div>
+      </div>
+    </form>
+
+    <div modal-footer>
+      <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="saving">Cancelar</button>
+      <button type="submit" form="empForm" class="btn btn-primary" [disabled]="saving">
+        <span class="btn-spinner" *ngIf="saving"></span>
+        {{ saving ? 'Guardando...' : (isEditMode ? 'Guardar Cambios' : 'Crear Empleado') }}
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- Modal de Agregar/Editar Cliente -->
+  <app-modal 
+    [isOpen]="showModal && activeTab === 'clientes'" 
+    [title]="isEditMode ? 'Editar Cliente' : 'Nuevo Cliente'" 
+    size="lg"
+    (onClose)="closeModal()"
+  >
+    <form (ngSubmit)="onSubmit()" #cliForm="ngForm" id="cliForm" modal-body>
+      <div class="row g-3">
+        <div class="col-md-6 form-group">
+          <label class="form-label">Identificación *</label>
+          <input
+            type="text"
+            inputmode="numeric"
+            minlength="10"
+            maxlength="10"
+            [ngModel]="clienteForm.identificacion"
+            (ngModelChange)="clienteForm.identificacion = soloDigitos($event, 10)"
+            (keydown)="bloquearNoNumerico($event)"
+            name="identificacion"
+            required
+            class="form-control"
+          />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Correo Electrónico *</label>
+          <input type="email" [(ngModel)]="clienteForm.correo_electronico" name="correo_electronico" required class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Nombres *</label>
+          <input type="text" [(ngModel)]="clienteForm.nombres" name="nombres" required class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Apellidos *</label>
+          <input type="text" [(ngModel)]="clienteForm.apellidos" name="apellidos" required class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Teléfono</label>
+          <input
+            type="text"
+            inputmode="numeric"
+            minlength="10"
+            maxlength="10"
+            [ngModel]="clienteForm.telefono"
+            (ngModelChange)="clienteForm.telefono = soloDigitos($event, 10)"
+            (keydown)="bloquearNoNumerico($event)"
+            name="telefono"
+            placeholder="Ej. 0961921004"
+            class="form-control"
+          />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Tipo de Cliente *</label>
+          <select [(ngModel)]="clienteForm.tipo_cliente" name="tipo_cliente" required class="form-control">
+            <option value="Estudiante">Estudiante</option>
+            <option value="Docente">Docente</option>
+            <option value="Personal Administrativo">Personal Administrativo</option>
+            <option value="Persona externa">Persona externa</option>
+          </select>
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">{{ isEditMode ? 'Nueva Contraseña' : 'Contraseña *' }}</label>
+          <input type="password" [(ngModel)]="clienteForm.contrasenia" name="contrasenia" [required]="!isEditMode" class="form-control" />
+          <small class="form-hint" *ngIf="isEditMode">Déjalo en blanco para mantener la contraseña actual.</small>
+        </div>
+      </div>
+    </form>
+
+    <div modal-footer>
+      <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="saving">Cancelar</button>
+      <button type="submit" form="cliForm" class="btn btn-primary" [disabled]="saving">
+        <span class="btn-spinner" *ngIf="saving"></span>
+        {{ saving ? 'Guardando...' : (isEditMode ? 'Guardar Cambios' : 'Crear Cliente') }}
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- Modal de Confirmación de Eliminación -->
+  <app-modal 
+    [isOpen]="showDeleteModal" 
+    [title]="activeTab === 'empleados' ? '¿Eliminar empleado?' : '¿Eliminar cliente?'" 
+    size="sm"
+    (onClose)="closeDeleteModal()"
+  >
+    <div class="delete-modal-body" modal-body>
+      <div class="delete-modal-icon">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+      </div>
+      <div class="delete-modal-content">
+        <p class="delete-modal-message" *ngIf="activeTab === 'empleados'">
+          ¿Estás seguro de que deseas borrar
+          <strong>"{{ empleadoToDelete?.nombres }} {{ empleadoToDelete?.apellidos }}"</strong>
+          <span class="delete-modal-code">({{ empleadoToDelete?.identificacion }})</span>?
+        </p>
+        <p class="delete-modal-message" *ngIf="activeTab === 'clientes'">
+          ¿Estás seguro de que deseas borrar
+          <strong>"{{ clienteToDelete?.nombres }} {{ clienteToDelete?.apellidos }}"</strong>
+          <span class="delete-modal-code">({{ clienteToDelete?.identificacion }})</span>?
+        </p>
+        <p class="delete-modal-warning">Esta acción no se puede deshacer.</p>
+      </div>
+    </div>
+
+    <div modal-footer>
+      <button class="btn btn-secondary" (click)="closeDeleteModal()" [disabled]="deleting">Cancelar</button>
+      <button class="btn btn-danger" (click)="confirmDelete()" [disabled]="deleting">
+        <span class="btn-spinner" *ngIf="deleting"></span>
+        <i class="bi bi-trash-fill" *ngIf="!deleting"></i> {{ deleting ? 'Eliminando...' : 'Sí, Eliminar' }}
+      </button>
+    </div>
+  </app-modal>
+
+</div>

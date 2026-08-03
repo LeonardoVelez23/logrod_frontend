@@ -1,5 +1,5 @@
 /* Contenedor */
-.products-container {
+.users-container {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -21,6 +21,52 @@
   color: var(--text-secondary);
   font-size: 14px;
   margin: 0;
+}
+
+/* Tabs */
+.tabs-bar {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tab-btn:hover {
+  color: var(--accent);
+}
+
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.tab-count {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 9999px;
+}
+
+.tab-btn.active .tab-count {
+  background-color: var(--accent-muted);
+  color: var(--accent);
 }
 
 /* Barra de Controles y Filtros */
@@ -48,7 +94,7 @@
 /* Caja de Búsqueda */
 .search-box {
   position: relative;
-  width: 260px;
+  width: 300px;
 }
 
 .search-icon {
@@ -77,41 +123,16 @@
   box-shadow: 0 0 0 3px rgba(26, 54, 93, 0.12);
 }
 
-/* Selectores de Filtro */
-.filter-select {
-  background-color: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  border-radius: 9999px;
-  font-size: 13px;
-  padding: 10px 16px;
-  width: 180px;
-  outline: none;
-  cursor: pointer;
-  height: 40px;
-  transition: all var(--transition-fast);
-}
-
-.filter-select:focus {
-  background-color: var(--bg-secondary);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(26, 54, 93, 0.12);
-}
-
-.filter-select option {
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.add-product-btn {
+.add-user-btn {
   border-radius: 9999px !important;
   font-size: 13px;
   font-weight: 600;
   padding: 10px 20px;
   height: 40px;
+  white-space: nowrap;
 }
 
-/* Tabla de Productos */
+/* Tabla */
 .table-card {
   padding: 0;
   overflow: hidden;
@@ -124,21 +145,21 @@
 .table-responsive {
   width: 100%;
   overflow-x: auto;
-  max-height: calc(100vh - 290px);
+  max-height: calc(100vh - 330px);
 }
 
-.products-table {
+.users-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
   text-align: left;
 }
 
-.products-table th, .products-table td {
+.users-table th, .users-table td {
   padding: 14px 20px;
 }
 
-.products-table th {
+.users-table th {
   background-color: var(--bg-tertiary);
   color: var(--text-secondary);
   font-weight: 600;
@@ -148,78 +169,17 @@
   z-index: 10;
 }
 
-.products-table td {
+.users-table td {
   color: var(--text-primary);
   border-bottom: 1px solid var(--border-color);
 }
 
-.product-row {
+.user-row {
   transition: background-color var(--transition-fast);
 }
 
-.product-row:hover {
+.user-row:hover {
   background-color: rgba(0, 0, 0, 0.01);
-}
-
-.thumb-col {
-  width: 56px;
-}
-
-.product-thumb {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-tertiary);
-}
-
-.product-thumb-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 16px;
-}
-
-.image-upload-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.row .form-group {
-  margin-bottom: 0;
-}
-
-.image-preview {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-tertiary);
-  flex-shrink: 0;
-}
-
-.image-preview-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 24px;
-}
-
-.image-upload-controls {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.form-hint {
-  font-size: 11px;
-  color: var(--text-muted);
 }
 
 .code-col code {
@@ -232,53 +192,30 @@
   font-size: 12px;
 }
 
-.product-info-cell {
+.user-info-cell {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 8px;
 }
 
-.product-title {
+.user-title {
   font-weight: 600;
   color: var(--text-primary);
 }
 
-.product-desc {
-  font-size: 11px;
-  color: var(--text-muted);
-  max-width: 250px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.cargo-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.category-badge {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  background-color: var(--bg-tertiary);
-  padding: 3px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-}
-
-/* Badges de Stock */
-.stock-badge {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 3px 8px;
+.user-badge-you {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  background-color: var(--accent-muted);
+  padding: 2px 7px;
   border-radius: 9999px;
-  display: inline-block;
-}
-
-.stock-ok {
-  background-color: var(--success-muted);
-  color: var(--success);
-}
-
-.stock-low {
-  background-color: var(--danger-muted);
-  color: var(--danger);
 }
 
 /* Botones de Acción en Tabla */
@@ -303,6 +240,11 @@
   font-size: 12px;
 }
 
+.action-btn-tbl:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .edit-tbl-btn:hover {
   background-color: var(--accent-muted);
   border-color: rgba(26, 54, 93, 0.3);
@@ -310,11 +252,33 @@
   transform: scale(1.05);
 }
 
-.delete-tbl-btn:hover {
+.delete-tbl-btn:hover:not(:disabled) {
   background-color: var(--danger-muted);
   border-color: rgba(239, 68, 68, 0.3);
   color: var(--danger);
   transform: scale(1.05);
+}
+
+/* Estilos para el spinner de carga de botones */
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.7s linear infinite;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.btn-secondary .btn-spinner {
+  border-color: rgba(0, 0, 0, 0.2);
+  border-top-color: var(--text-secondary);
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Estilos internos para el cuerpo del modal de eliminación */
@@ -379,5 +343,12 @@
   font-weight: 500;
   margin: 0;
   opacity: 0.85;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
