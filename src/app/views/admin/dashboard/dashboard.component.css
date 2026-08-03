@@ -26,6 +26,61 @@
   margin: 0;
 }
 
+/* Filtro de Fecha */
+.date-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.date-filter-chips {
+  display: flex;
+  gap: 8px;
+}
+
+.date-chip {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 9999px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.date-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.date-chip.active {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.date-range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-range-inputs .form-control {
+  width: auto;
+  font-size: 13px;
+  padding: 6px 10px;
+}
+
+.date-range-sep {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 /* KPIs Grid */
 .kpi-grid {
   display: grid;

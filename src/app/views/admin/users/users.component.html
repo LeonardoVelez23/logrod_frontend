@@ -154,6 +154,7 @@
   <app-modal 
     [isOpen]="showModal && activeTab === 'empleados'" 
     [title]="isEditMode ? 'Editar Empleado' : 'Nuevo Empleado'" 
+    size="lg"
     (onClose)="closeModal()"
   >
     <form (ngSubmit)="onSubmit()" #empForm="ngForm" id="empForm" modal-body>
@@ -241,6 +242,7 @@
   <app-modal 
     [isOpen]="showModal && activeTab === 'clientes'" 
     [title]="isEditMode ? 'Editar Cliente' : 'Nuevo Cliente'" 
+    size="lg"
     (onClose)="closeModal()"
   >
     <form (ngSubmit)="onSubmit()" #cliForm="ngForm" id="cliForm" modal-body>

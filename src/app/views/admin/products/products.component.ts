@@ -36,6 +36,11 @@ export class ProductsComponent implements OnInit {
   showDeleteModal: boolean = false;
   productToDelete: Producto | null = null;
 
+  // Control de Modal de Nueva Categoría
+  showCategoryModal: boolean = false;
+  newCategoryNombre: string = '';
+  isSavingCategory: boolean = false;
+
   // Imagen del producto (se sube aparte, después de crear/guardar los datos del producto)
   selectedImageFile: File | null = null;
   imagePreviewUrl: string | null = null;
@@ -141,10 +146,77 @@ export class ProductsComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  // Formatear el código a máximo 8 caracteres alfanuméricos en mayúsculas
+  onCodigoInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const cleanValue = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+    this.productoForm.codigo = cleanValue;
+    input.value = cleanValue;
+  }
+
   // Cerrar el modal y refrescar la UI
   closeModal() {
     this.showModal = false;
     this.cdr.detectChanges();
+  }
+
+  // Métodos para crear una nueva categoría directamente desde el formulario de producto
+  openAddCategoryModal() {
+    this.newCategoryNombre = '';
+    this.showCategoryModal = true;
+    this.cdr.detectChanges();
+  }
+
+  closeCategoryModal() {
+    this.showCategoryModal = false;
+    this.newCategoryNombre = '';
+    this.isSavingCategory = false;
+    this.cdr.detectChanges();
+  }
+
+  guardarNuevaCategoria() {
+    const nombre = this.newCategoryNombre.trim();
+    if (!nombre) {
+      this.toastService.showWarning('El nombre de la categoría no puede estar vacío.');
+      return;
+    }
+
+    this.isSavingCategory = true;
+    this.productService.createCategoria(nombre).subscribe({
+      next: (response) => {
+        if (response.success) {
+          const newCat = response.data;
+          this.toastService.showSuccess(`Categoría "${newCat.nombre}" creada correctamente.`);
+          
+          // Cerrar modal inmediatamente y limpiar estado
+          this.closeCategoryModal();
+
+          // Recargar la lista de categorías y seleccionar la recién creada
+          this.productService.getCategorias().subscribe({
+            next: (catRes) => {
+              if (catRes.success) {
+                this.categorias = catRes.data;
+                if (newCat && newCat.id) {
+                  this.productoForm.categoria_id = newCat.id;
+                }
+                this.cdr.detectChanges();
+              }
+            },
+            error: () => {
+              this.cdr.detectChanges();
+            }
+          });
+        } else {
+          this.isSavingCategory = false;
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => {
+        this.isSavingCategory = false;
+        this.toastService.showError('Error al crear categoría: ' + (err.error?.message || err.message));
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   // Validar y previsualizar la imagen seleccionada (aún no se sube al servidor)

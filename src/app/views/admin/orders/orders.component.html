@@ -7,17 +7,26 @@
     </div>
     
     <div class="header-actions">
+      <!-- Filtro por Día -->
+      <div class="day-filter" *ngIf="!verTodosLosDias">
+        <input type="date" [(ngModel)]="selectedFecha" (ngModelChange)="cambiarFecha($event)" class="form-control day-filter-input" />
+        <button type="button" class="btn btn-secondary btn-sm" (click)="irAHoy()" title="Ir al día de hoy">Hoy</button>
+      </div>
+      <button type="button" class="day-filter-toggle" (click)="toggleVerTodosLosDias()">
+        {{ verTodosLosDias ? 'Ver solo un día' : 'Ver todos los días' }}
+      </button>
+
       <!-- Buscador -->
       <div class="search-box">
         <i class="bi bi-search search-icon"></i>
-        <input 
-          type="text" 
-          [(ngModel)]="searchTerm" 
-          placeholder="Buscar pedido por ID, cliente..." 
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Buscar pedido por ID, cliente..."
           class="form-control search-input"
         />
       </div>
-      
+
       <button *ngIf="puedeCrearPedidos" class="btn btn-primary create-order-btn" (click)="openCreateModal()" title="Registrar un nuevo pedido">
         <i class="bi bi-plus-lg"></i> + Nuevo Pedido
       </button>

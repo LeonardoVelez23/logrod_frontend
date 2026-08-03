@@ -10,6 +10,45 @@
     </button>
   </div>
 
+  <!-- Filtro de Fecha para las Métricas -->
+  <div class="glass-card date-filter-bar">
+    <div class="date-filter-chips">
+      <button
+        type="button"
+        class="date-chip"
+        [class.active]="filtroFecha === 'todo'"
+        (click)="cambiarFiltroFecha('todo')"
+      >
+        Todo
+      </button>
+      <button
+        type="button"
+        class="date-chip"
+        [class.active]="filtroFecha === 'hoy'"
+        (click)="cambiarFiltroFecha('hoy')"
+      >
+        Hoy
+      </button>
+      <button
+        type="button"
+        class="date-chip"
+        [class.active]="filtroFecha === 'rango'"
+        (click)="cambiarFiltroFecha('rango')"
+      >
+        Rango personalizado
+      </button>
+    </div>
+
+    <div class="date-range-inputs" *ngIf="filtroFecha === 'rango'">
+      <input type="date" [(ngModel)]="fechaDesde" class="form-control" />
+      <span class="date-range-sep">a</span>
+      <input type="date" [(ngModel)]="fechaHasta" class="form-control" />
+      <button type="button" class="btn btn-primary btn-sm" (click)="aplicarRangoPersonalizado()">
+        Aplicar
+      </button>
+    </div>
+  </div>
+
   <!-- Rejilla de KPIs -->
   <div class="kpi-grid">
     <!-- KPI 1: Ventas -->

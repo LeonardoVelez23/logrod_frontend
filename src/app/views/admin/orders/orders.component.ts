@@ -34,7 +34,12 @@ export class OrdersComponent implements OnInit {
   clientes: Cliente[] = [];
   productosDisponibles: Producto[] = [];
   searchTerm: string = '';
-  
+
+  // Filtro por día: por defecto solo "hoy"; se puede cambiar de fecha o ver todos los días
+  selectedFecha: string = this.hoyStr();
+  verTodosLosDias: boolean = false;
+
+
   selectedPedido: Pedido | null = null;
   showDetailModal: boolean = false;
 
@@ -75,6 +80,10 @@ export class OrdersComponent implements OnInit {
   
   // Para registrar un timer que actualice los minutos transcurridos en tiempo real
   private timerId: any;
+
+  private hoyStr(): string {
+    return new Date().toISOString().split('T')[0];
+  }
 
   ngOnInit() {
     this.loadPedidos();
@@ -159,11 +168,29 @@ export class OrdersComponent implements OnInit {
     return this.authService.getCurrentRole() === 'cocinero';
   }
 
-  // Filtrar pedidos por estado y término de búsqueda
+  // Cambiar el día que se está viendo en el tablero
+  cambiarFecha(fecha: string) {
+    this.selectedFecha = fecha;
+    this.verTodosLosDias = false;
+  }
+
+  // Alternar entre ver solo el día seleccionado o el histórico completo
+  toggleVerTodosLosDias() {
+    this.verTodosLosDias = !this.verTodosLosDias;
+  }
+
+  irAHoy() {
+    this.selectedFecha = this.hoyStr();
+    this.verTodosLosDias = false;
+  }
+
+  // Filtrar pedidos por día, estado y término de búsqueda
   getPedidosPorEstados(estados: string[]): Pedido[] {
     return this.pedidos.filter(pedido => {
       const coincideEstado = estados.includes(pedido.estado);
       if (!coincideEstado) return false;
+
+      if (!this.verTodosLosDias && pedido.fecha !== this.selectedFecha) return false;
 
       if (!this.searchTerm.trim()) return true;
 

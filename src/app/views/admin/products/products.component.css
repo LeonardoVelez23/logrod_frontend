@@ -188,10 +188,14 @@
   gap: 16px;
 }
 
+.row .form-group {
+  margin-bottom: 0;
+}
+
 .image-preview {
-  width: 80px;
-  height: 80px;
-  border-radius: 10px;
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
   object-fit: cover;
   border: 1px solid var(--border-color);
   background-color: var(--bg-tertiary);

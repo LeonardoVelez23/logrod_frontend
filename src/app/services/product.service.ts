@@ -67,4 +67,11 @@ export class ProductService {
   getCategorias(): Observable<{ success: boolean; data: Categoria[] }> {
     return this.http.get<{ success: boolean; data: Categoria[] }>(`${API_BASE_URL}/categorias`);
   }
+
+  createCategoria(nombre: string): Observable<{ success: boolean; message: string; data: Categoria }> {
+    return this.http.post<{ success: boolean; message: string; data: Categoria }>(
+      `${API_BASE_URL}/categorias`,
+      { nombre }
+    );
+  }
 }

@@ -121,25 +121,28 @@
   <app-modal 
     [isOpen]="showModal" 
     [title]="isEditMode ? 'Editar Producto' : 'Nuevo Producto'" 
+    size="lg"
     (onClose)="closeModal()"
   >
     <form (ngSubmit)="onSubmit()" #prodForm="ngForm" id="prodForm" modal-body>
       <div class="row g-3">
-        <!-- Código del Producto -->
-        <div class="col-md-6 form-group">
-          <label class="form-label">Código del Producto *</label>
+        <!-- Fila 1: Código (3), Nombre (5), Categoría (4) -->
+        <div class="col-md-3 form-group">
+          <label class="form-label">Código *</label>
           <input 
             type="text" 
             [(ngModel)]="productoForm.codigo" 
+            (input)="onCodigoInput($event)"
             name="codigo" 
             required 
-            placeholder="Ej. PROD001" 
+            maxlength="8"
+            placeholder="PROD0001" 
             class="form-control"
+            style="text-transform: uppercase; font-family: monospace; letter-spacing: 1px;"
           />
         </div>
 
-        <!-- Nombre -->
-        <div class="col-md-6 form-group">
+        <div class="col-md-5 form-group">
           <label class="form-label">Nombre del Producto *</label>
           <input 
             type="text" 
@@ -151,8 +154,26 @@
           />
         </div>
 
-        <!-- Precio -->
-        <div class="col-md-6 form-group">
+        <div class="col-md-4 form-group">
+          <label class="form-label d-flex justify-content-between align-items-center mb-1">
+            <span>Categoría *</span>
+            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-semibold" (click)="openAddCategoryModal()" title="Crear nueva categoría" style="font-size: 11px; color: var(--accent);">
+              + Nueva
+            </button>
+          </label>
+          <select 
+            [(ngModel)]="productoForm.categoria_id" 
+            name="categoria_id" 
+            required 
+            class="form-control"
+          >
+            <option value="0" disabled>-- Categoría --</option>
+            <option *ngFor="let cat of categorias" [value]="cat.id">{{ cat.nombre }}</option>
+          </select>
+        </div>
+
+        <!-- Fila 2: Precio (4), Stock (4), Estado (4) -->
+        <div class="col-md-4 form-group">
           <label class="form-label">Precio ($) *</label>
           <input 
             type="number" 
@@ -165,8 +186,7 @@
           />
         </div>
 
-        <!-- Cantidad Disponible / Stock -->
-        <div class="col-md-6 form-group">
+        <div class="col-md-4 form-group">
           <label class="form-label">Stock Inicial *</label>
           <input 
             type="number" 
@@ -178,22 +198,7 @@
           />
         </div>
 
-        <!-- Categoría -->
-        <div class="col-md-6 form-group">
-          <label class="form-label">Categoría *</label>
-          <select 
-            [(ngModel)]="productoForm.categoria_id" 
-            name="categoria_id" 
-            required 
-            class="form-control"
-          >
-            <option value="0" disabled>-- Seleccione Categoría --</option>
-            <option *ngFor="let cat of categorias" [value]="cat.id">{{ cat.nombre }}</option>
-          </select>
-        </div>
-
-        <!-- Estado de Disponibilidad -->
-        <div class="col-md-6 form-group">
+        <div class="col-md-4 form-group">
           <label class="form-label">Estado de Disponibilidad *</label>
           <select 
             [(ngModel)]="productoForm.estado" 
@@ -206,20 +211,19 @@
           </select>
         </div>
 
-        <!-- Descripción -->
-        <div class="col-12 form-group">
+        <!-- Fila 3: Descripción (6) y Foto (6) lado a lado -->
+        <div class="col-md-6 form-group">
           <label class="form-label">Descripción</label>
           <textarea
             [(ngModel)]="productoForm.descripcion"
             name="descripcion"
-            rows="3"
+            rows="2"
             placeholder="Ingresa una breve descripción de los ingredientes o del plato..."
             class="form-control"
           ></textarea>
         </div>
 
-        <!-- Imagen del Producto -->
-        <div class="col-12 form-group">
+        <div class="col-md-6 form-group">
           <label class="form-label">Foto del Producto</label>
           <div class="image-upload-row">
             <img *ngIf="imagePreviewUrl" [src]="imagePreviewUrl" alt="Vista previa" class="image-preview" />
@@ -275,5 +279,32 @@
     </div>
   </app-modal>
 
+  <!-- Modal de Crear Nueva Categoría -->
+  <app-modal 
+    [isOpen]="showCategoryModal" 
+    title="Nueva Categoría" 
+    size="sm"
+    (onClose)="closeCategoryModal()"
+  >
+    <div modal-body>
+      <div class="form-group mb-0">
+        <label class="form-label">Nombre de la Categoría *</label>
+        <input 
+          type="text" 
+          [(ngModel)]="newCategoryNombre" 
+          placeholder="Ej. Postres, Entradas, Bebidas..." 
+          class="form-control"
+          (keyup.enter)="guardarNuevaCategoria()"
+        />
+      </div>
+    </div>
+    <div modal-footer>
+      <button type="button" class="btn btn-secondary" (click)="closeCategoryModal()">Cancelar</button>
+      <button type="button" class="btn btn-primary" [disabled]="isSavingCategory || !newCategoryNombre.trim()" (click)="guardarNuevaCategoria()">
+        <span class="btn-spinner me-1" *ngIf="isSavingCategory"></span>
+        {{ isSavingCategory ? 'Guardando...' : 'Guardar Categoría' }}
+      </button>
+    </div>
+  </app-modal>
 
 </div>
