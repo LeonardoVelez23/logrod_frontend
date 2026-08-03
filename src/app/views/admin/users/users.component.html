@@ -151,188 +151,180 @@
   </div>
 
   <!-- Modal de Agregar/Editar Empleado -->
-  <div class="modal-backdrop" *ngIf="showModal && activeTab === 'empleados'">
-    <div class="glass-card user-modal animate-fade-in">
-      <div class="modal-header">
-        <h3>{{ isEditMode ? 'Editar Empleado' : 'Nuevo Empleado' }}</h3>
-        <button class="close-btn" (click)="closeModal()" [disabled]="saving">&times;</button>
+  <app-modal 
+    [isOpen]="showModal && activeTab === 'empleados'" 
+    [title]="isEditMode ? 'Editar Empleado' : 'Nuevo Empleado'" 
+    (onClose)="closeModal()"
+  >
+    <form (ngSubmit)="onSubmit()" #empForm="ngForm" id="empForm" modal-body>
+      <div class="row g-3">
+        <div class="col-md-6 form-group">
+          <label class="form-label">Identificación *</label>
+          <input
+            type="text"
+            inputmode="numeric"
+            minlength="10"
+            maxlength="10"
+            [ngModel]="empleadoForm.identificacion"
+            (ngModelChange)="empleadoForm.identificacion = soloDigitos($event, 10)"
+            (keydown)="bloquearNoNumerico($event)"
+            name="identificacion"
+            required
+            class="form-control"
+          />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Correo Electrónico *</label>
+          <input type="email" [(ngModel)]="empleadoForm.correo_electronico" name="correo_electronico" required class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Nombres *</label>
+          <input type="text" [(ngModel)]="empleadoForm.nombres" name="nombres" required class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Apellidos *</label>
+          <input type="text" [(ngModel)]="empleadoForm.apellidos" name="apellidos" required class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Teléfono</label>
+          <input
+            type="text"
+            inputmode="numeric"
+            minlength="10"
+            maxlength="10"
+            [ngModel]="empleadoForm.telefono"
+            (ngModelChange)="empleadoForm.telefono = soloDigitos($event, 10)"
+            (keydown)="bloquearNoNumerico($event)"
+            name="telefono"
+            placeholder="Ej. 0987654321"
+            class="form-control"
+          />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Turno de Trabajo</label>
+          <select [(ngModel)]="empleadoForm.turno_trabajo" name="turno_trabajo" class="form-control">
+            <option value="">-- Sin especificar --</option>
+            <option value="Mañana">Mañana</option>
+            <option value="Tarde">Tarde</option>
+            <option value="Full time">Full time</option>
+          </select>
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Cargo</label>
+          <select [(ngModel)]="empleadoForm.cargo" name="cargo" class="form-control">
+            <option value="">-- Sin especificar --</option>
+            <option value="Mesero">Mesero</option>
+            <option value="Cocinero">Cocinero</option>
+            <option value="Cajero">Cajero</option>
+            <option value="Administrador">Administrador</option>
+          </select>
+          <small class="form-hint">"Administrador" otorga acceso completo al Panel Admin.</small>
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">{{ isEditMode ? 'Nueva Contraseña' : 'Contraseña *' }}</label>
+          <input type="password" [(ngModel)]="empleadoForm.contrasenia" name="contrasenia" [required]="!isEditMode" class="form-control" />
+          <small class="form-hint" *ngIf="isEditMode">Déjalo en blanco para mantener la contraseña actual.</small>
+        </div>
       </div>
+    </form>
 
-      <form (ngSubmit)="onSubmit()" #empForm="ngForm">
-        <div class="modal-body custom-scrollbar">
-          <div class="row g-3">
-            <div class="col-md-6 form-group">
-              <label class="form-label">Identificación *</label>
-              <input
-                type="text"
-                inputmode="numeric"
-                minlength="10"
-                maxlength="10"
-                [ngModel]="empleadoForm.identificacion"
-                (ngModelChange)="empleadoForm.identificacion = soloDigitos($event, 10)"
-                (keydown)="bloquearNoNumerico($event)"
-                name="identificacion"
-                required
-                class="form-control"
-              />
-            </div>
-            <div class="col-md-6 form-group">
-              <label class="form-label">Correo Electrónico *</label>
-              <input type="email" [(ngModel)]="empleadoForm.correo_electronico" name="correo_electronico" required class="form-control" />
-            </div>
-            <div class="col-md-6 form-group">
-              <label class="form-label">Nombres *</label>
-              <input type="text" [(ngModel)]="empleadoForm.nombres" name="nombres" required class="form-control" />
-            </div>
-            <div class="col-md-6 form-group">
-              <label class="form-label">Apellidos *</label>
-              <input type="text" [(ngModel)]="empleadoForm.apellidos" name="apellidos" required class="form-control" />
-            </div>
-            <div class="col-md-6 form-group">
-              <label class="form-label">Teléfono</label>
-              <input
-                type="text"
-                inputmode="numeric"
-                minlength="10"
-                maxlength="10"
-                [ngModel]="empleadoForm.telefono"
-                (ngModelChange)="empleadoForm.telefono = soloDigitos($event, 10)"
-                (keydown)="bloquearNoNumerico($event)"
-                name="telefono"
-                placeholder="Ej. 0987654321"
-                class="form-control"
-              />
-            </div>
-            <div class="col-md-6 form-group">
-              <label class="form-label">Turno de Trabajo</label>
-              <select [(ngModel)]="empleadoForm.turno_trabajo" name="turno_trabajo" class="form-control">
-                <option value="">-- Sin especificar --</option>
-                <option value="Mañana">Mañana</option>
-                <option value="Tarde">Tarde</option>
-                <option value="Full time">Full time</option>
-              </select>
-            </div>
-            <div class="col-md-6 form-group">
-              <label class="form-label">Cargo</label>
-              <select [(ngModel)]="empleadoForm.cargo" name="cargo" class="form-control">
-                <option value="">-- Sin especificar --</option>
-                <option value="Mesero">Mesero</option>
-                <option value="Cocinero">Cocinero</option>
-                <option value="Cajero">Cajero</option>
-                <option value="Administrador">Administrador</option>
-              </select>
-              <small class="form-hint">"Administrador" otorga acceso completo al Panel Admin.</small>
-            </div>
-            <div class="col-md-6 form-group">
-              <label class="form-label">{{ isEditMode ? 'Nueva Contraseña' : 'Contraseña *' }}</label>
-              <input type="password" [(ngModel)]="empleadoForm.contrasenia" name="contrasenia" [required]="!isEditMode" class="form-control" />
-              <small class="form-hint" *ngIf="isEditMode">Déjalo en blanco para mantener la contraseña actual.</small>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="saving">Cancelar</button>
-          <button type="submit" class="btn btn-primary" [disabled]="saving">
-            <span class="btn-spinner" *ngIf="saving"></span>
-            {{ saving ? 'Guardando...' : (isEditMode ? 'Guardar Cambios' : 'Crear Empleado') }}
-          </button>
-        </div>
-      </form>
+    <div modal-footer>
+      <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="saving">Cancelar</button>
+      <button type="submit" form="empForm" class="btn btn-primary" [disabled]="saving">
+        <span class="btn-spinner" *ngIf="saving"></span>
+        {{ saving ? 'Guardando...' : (isEditMode ? 'Guardar Cambios' : 'Crear Empleado') }}
+      </button>
     </div>
-  </div>
+  </app-modal>
 
   <!-- Modal de Agregar/Editar Cliente -->
-  <div class="modal-backdrop" *ngIf="showModal && activeTab === 'clientes'">
-    <div class="glass-card user-modal animate-fade-in">
-      <div class="modal-header">
-        <h3>{{ isEditMode ? 'Editar Cliente' : 'Nuevo Cliente' }}</h3>
-        <button class="close-btn" (click)="closeModal()" [disabled]="saving">&times;</button>
+  <app-modal 
+    [isOpen]="showModal && activeTab === 'clientes'" 
+    [title]="isEditMode ? 'Editar Cliente' : 'Nuevo Cliente'" 
+    (onClose)="closeModal()"
+  >
+    <form (ngSubmit)="onSubmit()" #cliForm="ngForm" id="cliForm" modal-body>
+      <div class="row g-3">
+        <div class="col-md-6 form-group">
+          <label class="form-label">Identificación *</label>
+          <input
+            type="text"
+            inputmode="numeric"
+            minlength="10"
+            maxlength="10"
+            [ngModel]="clienteForm.identificacion"
+            (ngModelChange)="clienteForm.identificacion = soloDigitos($event, 10)"
+            (keydown)="bloquearNoNumerico($event)"
+            name="identificacion"
+            required
+            class="form-control"
+          />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Correo Electrónico *</label>
+          <input type="email" [(ngModel)]="clienteForm.correo_electronico" name="correo_electronico" required class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Nombres *</label>
+          <input type="text" [(ngModel)]="clienteForm.nombres" name="nombres" required class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Apellidos *</label>
+          <input type="text" [(ngModel)]="clienteForm.apellidos" name="apellidos" required class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Teléfono</label>
+          <input
+            type="text"
+            inputmode="numeric"
+            minlength="10"
+            maxlength="10"
+            [ngModel]="clienteForm.telefono"
+            (ngModelChange)="clienteForm.telefono = soloDigitos($event, 10)"
+            (keydown)="bloquearNoNumerico($event)"
+            name="telefono"
+            placeholder="Ej. 0961921004"
+            class="form-control"
+          />
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">Tipo de Cliente *</label>
+          <select [(ngModel)]="clienteForm.tipo_cliente" name="tipo_cliente" required class="form-control">
+            <option value="Estudiante">Estudiante</option>
+            <option value="Docente">Docente</option>
+            <option value="Personal Administrativo">Personal Administrativo</option>
+            <option value="Persona externa">Persona externa</option>
+          </select>
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="form-label">{{ isEditMode ? 'Nueva Contraseña' : 'Contraseña *' }}</label>
+          <input type="password" [(ngModel)]="clienteForm.contrasenia" name="contrasenia" [required]="!isEditMode" class="form-control" />
+          <small class="form-hint" *ngIf="isEditMode">Déjalo en blanco para mantener la contraseña actual.</small>
+        </div>
       </div>
+    </form>
 
-      <form (ngSubmit)="onSubmit()" #cliForm="ngForm">
-        <div class="modal-body custom-scrollbar">
-          <div class="row g-3">
-            <div class="col-md-6 form-group">
-              <label class="form-label">Identificación *</label>
-              <input
-                type="text"
-                inputmode="numeric"
-                minlength="10"
-                maxlength="10"
-                [ngModel]="clienteForm.identificacion"
-                (ngModelChange)="clienteForm.identificacion = soloDigitos($event, 10)"
-                (keydown)="bloquearNoNumerico($event)"
-                name="identificacion"
-                required
-                class="form-control"
-              />
-            </div>
-            <div class="col-md-6 form-group">
-              <label class="form-label">Correo Electrónico *</label>
-              <input type="email" [(ngModel)]="clienteForm.correo_electronico" name="correo_electronico" required class="form-control" />
-            </div>
-            <div class="col-md-6 form-group">
-              <label class="form-label">Nombres *</label>
-              <input type="text" [(ngModel)]="clienteForm.nombres" name="nombres" required class="form-control" />
-            </div>
-            <div class="col-md-6 form-group">
-              <label class="form-label">Apellidos *</label>
-              <input type="text" [(ngModel)]="clienteForm.apellidos" name="apellidos" required class="form-control" />
-            </div>
-            <div class="col-md-6 form-group">
-              <label class="form-label">Teléfono</label>
-              <input
-                type="text"
-                inputmode="numeric"
-                minlength="10"
-                maxlength="10"
-                [ngModel]="clienteForm.telefono"
-                (ngModelChange)="clienteForm.telefono = soloDigitos($event, 10)"
-                (keydown)="bloquearNoNumerico($event)"
-                name="telefono"
-                placeholder="Ej. 0961921004"
-                class="form-control"
-              />
-            </div>
-            <div class="col-md-6 form-group">
-              <label class="form-label">Tipo de Cliente *</label>
-              <select [(ngModel)]="clienteForm.tipo_cliente" name="tipo_cliente" required class="form-control">
-                <option value="Estudiante">Estudiante</option>
-                <option value="Docente">Docente</option>
-                <option value="Personal Administrativo">Personal Administrativo</option>
-                <option value="Persona externa">Persona externa</option>
-              </select>
-            </div>
-            <div class="col-md-6 form-group">
-              <label class="form-label">{{ isEditMode ? 'Nueva Contraseña' : 'Contraseña *' }}</label>
-              <input type="password" [(ngModel)]="clienteForm.contrasenia" name="contrasenia" [required]="!isEditMode" class="form-control" />
-              <small class="form-hint" *ngIf="isEditMode">Déjalo en blanco para mantener la contraseña actual.</small>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="saving">Cancelar</button>
-          <button type="submit" class="btn btn-primary" [disabled]="saving">
-            <span class="btn-spinner" *ngIf="saving"></span>
-            {{ saving ? 'Guardando...' : (isEditMode ? 'Guardar Cambios' : 'Crear Cliente') }}
-          </button>
-        </div>
-      </form>
+    <div modal-footer>
+      <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="saving">Cancelar</button>
+      <button type="submit" form="cliForm" class="btn btn-primary" [disabled]="saving">
+        <span class="btn-spinner" *ngIf="saving"></span>
+        {{ saving ? 'Guardando...' : (isEditMode ? 'Guardar Cambios' : 'Crear Cliente') }}
+      </button>
     </div>
-  </div>
+  </app-modal>
 
   <!-- Modal de Confirmación de Eliminación -->
-  <div class="modal-backdrop" *ngIf="showDeleteModal">
-    <div class="glass-card delete-modal animate-fade-in">
+  <app-modal 
+    [isOpen]="showDeleteModal" 
+    [title]="activeTab === 'empleados' ? '¿Eliminar empleado?' : '¿Eliminar cliente?'" 
+    size="sm"
+    (onClose)="closeDeleteModal()"
+  >
+    <div class="delete-modal-body" modal-body>
       <div class="delete-modal-icon">
         <i class="bi bi-exclamation-triangle-fill"></i>
       </div>
       <div class="delete-modal-content">
-        <h3 class="delete-modal-title">
-          {{ activeTab === 'empleados' ? '¿Eliminar empleado?' : '¿Eliminar cliente?' }}
-        </h3>
         <p class="delete-modal-message" *ngIf="activeTab === 'empleados'">
           ¿Estás seguro de que deseas borrar
           <strong>"{{ empleadoToDelete?.nombres }} {{ empleadoToDelete?.apellidos }}"</strong>
@@ -345,13 +337,15 @@
         </p>
         <p class="delete-modal-warning">Esta acción no se puede deshacer.</p>
       </div>
-      <div class="delete-modal-actions">
-        <button class="btn btn-secondary" (click)="closeDeleteModal()" [disabled]="deleting">Cancelar</button>
-        <button class="btn btn-danger-solid" (click)="confirmDelete()" [disabled]="deleting">
-          <span class="btn-spinner" *ngIf="deleting"></span>
-          <i class="bi bi-trash-fill" *ngIf="!deleting"></i> {{ deleting ? 'Eliminando...' : 'Sí, Eliminar' }}
-        </button>
-      </div>
     </div>
-  </div>
+
+    <div modal-footer>
+      <button class="btn btn-secondary" (click)="closeDeleteModal()" [disabled]="deleting">Cancelar</button>
+      <button class="btn btn-danger" (click)="confirmDelete()" [disabled]="deleting">
+        <span class="btn-spinner" *ngIf="deleting"></span>
+        <i class="bi bi-trash-fill" *ngIf="!deleting"></i> {{ deleting ? 'Eliminando...' : 'Sí, Eliminar' }}
+      </button>
+    </div>
+  </app-modal>
+
 </div>

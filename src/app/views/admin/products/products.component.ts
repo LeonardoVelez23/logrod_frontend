@@ -2,14 +2,16 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService, Producto, Categoria } from '../../../services/product.service';
+import { ModalComponent } from '../../../components/modal/modal.component';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent],
   templateUrl: './products.component.html',
   styleUrl: './products.component.css'
 })
+
 export class ProductsComponent implements OnInit {
   private productService = inject(ProductService);
   private cdr = inject(ChangeDetectorRef); // Inyectar ChangeDetectorRef para forzar actualización de la UI

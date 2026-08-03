@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrderService, Pedido } from '../../../services/order.service';
@@ -6,18 +6,21 @@ import { EmployeeService, Empleado } from '../../../services/employee.service';
 import { ClientService, Cliente } from '../../../services/client.service';
 import { ProductService, Producto } from '../../../services/product.service';
 import { AuthService } from '../../../services/auth.service';
+import { ModalComponent } from '../../../components/modal/modal.component';
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.css'
 })
+
 export class OrdersComponent implements OnInit {
   private orderService = inject(OrderService);
   private employeeService = inject(EmployeeService);
   private clientService = inject(ClientService);
+  private cdr = inject(ChangeDetectorRef);
   private productService = inject(ProductService);
   public authService = inject(AuthService);
 
@@ -221,12 +224,14 @@ export class OrdersComponent implements OnInit {
   openDetail(pedido: Pedido) {
     this.selectedPedido = pedido;
     this.showDetailModal = true;
+    this.cdr.detectChanges();
   }
 
   // Cerrar modal de detalles
   closeDetail() {
     this.selectedPedido = null;
     this.showDetailModal = false;
+    this.cdr.detectChanges();
   }
 
   // Helper: Obtener iniciales para el avatar
@@ -280,6 +285,7 @@ export class OrdersComponent implements OnInit {
           if (this.clientes.length > 0) {
             this.newOrderClienteId = this.clientes[0].id;
           }
+          this.cdr.detectChanges();
         }
       },
       error: (err) => console.error('Error al cargar clientes:', err)
@@ -293,16 +299,19 @@ export class OrdersComponent implements OnInit {
           if (this.productosDisponibles.length > 0 && this.productosDisponibles[0].id) {
             this.selectedProductId = this.productosDisponibles[0].id;
           }
+          this.cdr.detectChanges();
         }
       },
       error: (err) => console.error('Error al cargar productos:', err)
     });
 
     this.showCreateModal = true;
+    this.cdr.detectChanges();
   }
 
   closeCreateModal() {
     this.showCreateModal = false;
+    this.cdr.detectChanges();
   }
 
   addItemToNewOrder() {

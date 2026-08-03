@@ -259,139 +259,36 @@
   transform: scale(1.05);
 }
 
-/* Modal Backdrop */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(26, 54, 93, 0.3);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  padding: 20px;
+/* Estilos para el spinner de carga de botones */
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.7s linear infinite;
+  margin-right: 4px;
+  vertical-align: middle;
 }
 
-/* Contenedor Modal */
-.user-modal {
-  width: 100%;
-  max-width: 600px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-  border-radius: var(--border-radius-lg);
-  display: flex;
-  flex-direction: column;
-  max-height: 90vh;
-  overflow: hidden;
+.btn-secondary .btn-spinner {
+  border-color: rgba(0, 0, 0, 0.2);
+  border-top-color: var(--text-secondary);
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border-color);
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
 }
 
-.modal-header h3 {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.close-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 24px;
-  cursor: pointer;
-  transition: color var(--transition-fast);
-  line-height: 1;
-}
-
-.close-btn:hover {
-  color: var(--text-primary);
-}
-
-.modal-body {
-  padding: 24px;
-  overflow-y: auto;
-}
-
-.form-hint {
-  display: block;
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-/* Modal Footer */
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid var(--border-color);
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-/* Scrollbar */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.08);
-  border-radius: 9999px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--accent);
-}
-
-/* Responsividad */
-@media (max-width: 768px) {
-  .controls-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .filter-group {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .search-box {
-    width: 100%;
-  }
-  .tabs-bar {
-    overflow-x: auto;
-  }
-}
-
-/* ====== Modal de Confirmación de Eliminación ====== */
-.delete-modal {
-  width: 100%;
-  max-width: 440px;
-  background: var(--glass-bg);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  box-shadow: 0 25px 50px -12px rgba(239, 68, 68, 0.15), 0 10px 30px rgba(0, 0, 0, 0.15);
-  border-radius: var(--border-radius-lg);
+/* Estilos internos para el cuerpo del modal de eliminación */
+.delete-modal-body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 32px 28px 28px;
   gap: 20px;
   text-align: center;
+  padding: 12px 8px;
 }
 
 .delete-modal-icon {
@@ -417,13 +314,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.delete-modal-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
 }
 
 .delete-modal-message {
@@ -455,69 +345,10 @@
   opacity: 0.85;
 }
 
-.delete-modal-actions {
-  display: flex;
-  gap: 12px;
-  width: 100%;
-  justify-content: center;
+.form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
-.delete-modal-actions .btn {
-  flex: 1;
-  max-width: 180px;
-}
-
-/* Spinner de carga para botones en proceso */
-.btn-spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: btn-spin 0.7s linear infinite;
-  margin-right: 4px;
-  vertical-align: middle;
-}
-
-.btn-secondary .btn-spinner {
-  border-color: rgba(0, 0, 0, 0.2);
-  border-top-color: var(--text-secondary);
-}
-
-@keyframes btn-spin {
-  to { transform: rotate(360deg); }
-}
-
-.btn:disabled,
-.close-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Botón de eliminación destructivo */
-.btn-danger-solid {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: #fff;
-  border: 1px solid rgba(220, 38, 38, 0.4);
-  border-radius: 9999px;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 10px 20px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.btn-danger-solid:hover {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
-  transform: translateY(-1px);
-}
-
-.btn-danger-solid:active {
-  transform: translateY(0);
-  box-shadow: none;
-}

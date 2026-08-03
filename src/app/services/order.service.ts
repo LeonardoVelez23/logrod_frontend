@@ -2,6 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../config/api.config';
+import { Cliente } from './client.service';
+import { Empleado } from './employee.service';
 
 export interface DetallePedido {
   id?: number;
@@ -27,24 +29,13 @@ export interface Pedido {
   valor_total: number;
   cliente_id: number;
   empleado_id?: number | null;
-  cliente?: {
-    id: number;
-    nombres: string;
-    apellidos: string;
-    identificacion: string;
-    correo_electronico: string;
-    telefono?: string;
-  };
-  empleadoResponsable?: {
-    id: number;
-    nombres: string;
-    apellidos: string;
-    cargo: string;
-  } | null;
+  cliente?: Cliente;
+  empleadoResponsable?: Empleado | null;
   detalles: DetallePedido[];
   createdAt?: string;
   updatedAt?: string;
 }
+
 
 @Injectable({
   providedIn: 'root'

@@ -4,14 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { EmployeeService, Empleado } from '../../../services/employee.service';
 import { ClientService, Cliente } from '../../../services/client.service';
 import { AuthService } from '../../../services/auth.service';
+import { ModalComponent } from '../../../components/modal/modal.component';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent],
   templateUrl: './users.component.html',
   styleUrl: './users.component.css'
 })
+
 export class UsersComponent implements OnInit {
   private employeeService = inject(EmployeeService);
   private clientService = inject(ClientService);
