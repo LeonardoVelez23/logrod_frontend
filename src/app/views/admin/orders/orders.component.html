@@ -304,29 +304,60 @@
 
         <!-- Asignar Responsable (Solo Admin/Empleado) -->
         <div class="col-md-6">
-          <h4 class="section-title"><i class="bi bi-person-badge"></i> Empleado Asignado</h4>
-          
-          <div class="employee-assignment-box" *ngIf="authService.getCurrentRole() === 'admin'">
-            <select 
-              [value]="selectedPedido.empleado_id || ''" 
-              (change)="onEmpleadoChange(selectedPedido.id!, $event)"
-              class="form-control select-employee"
-            >
-              <option value="">-- Sin asignar --</option>
-              <option *ngFor="let emp of empleados" [value]="emp.id">
-                {{ emp.nombres }} {{ emp.apellidos }} ({{ emp.cargo || 'Personal' }})
-              </option>
-            </select>
-          </div>
-          
-          <div class="assigned-employee-read" *ngIf="authService.getCurrentRole() !== 'admin'">
-            <div class="assigned-user-info" *ngIf="selectedPedido.empleadoResponsable">
-              <div class="avatar-sm d-inline-flex me-2">
-                {{ getInitials(selectedPedido.empleadoResponsable.nombres, selectedPedido.empleadoResponsable.apellidos) }}
-              </div>
-              <span>{{ selectedPedido.empleadoResponsable.nombres }} {{ selectedPedido.empleadoResponsable.apellidos }}</span>
+          <!-- 1. Empleado de Atención (Mesero) -->
+          <div class="mb-3">
+            <h4 class="section-title"><i class="bi bi-person-badge-fill"></i> Empleado de Atención (Mesero)</h4>
+            
+            <div class="employee-assignment-box" *ngIf="authService.getCurrentRole() === 'admin'">
+              <select 
+                [(ngModel)]="tempEmpleadoId"
+                class="form-control select-employee"
+                style="padding: 10px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); width: 100%; font-size: 14px; color: var(--text-primary);"
+              >
+                <option value="">-- Sin asignar --</option>
+                <option *ngFor="let emp of getMeserosYCajeros()" [value]="emp.id">
+                  {{ emp.nombres }} {{ emp.apellidos }}
+                </option>
+              </select>
             </div>
-            <p *ngIf="!selectedPedido.empleadoResponsable" class="text-muted italic">Sin asignar</p>
+            
+            <div class="assigned-employee-read" *ngIf="authService.getCurrentRole() !== 'admin'">
+              <div class="assigned-user-info" *ngIf="selectedPedido.empleadoResponsable" style="display: flex; align-items: center; gap: 8px;">
+                <div class="avatar-sm d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle font-weight-bold" style="width: 32px; height: 32px; font-size: 12px;">
+                  {{ getInitials(selectedPedido.empleadoResponsable.nombres, selectedPedido.empleadoResponsable.apellidos) }}
+                </div>
+                <span class="font-weight-bold" style="font-size: 14px; color: var(--text-primary);">{{ selectedPedido.empleadoResponsable.nombres }} {{ selectedPedido.empleadoResponsable.apellidos }}</span>
+              </div>
+              <p *ngIf="!selectedPedido.empleadoResponsable" class="text-muted italic small mb-0">Sin asignar</p>
+            </div>
+          </div>
+
+          <!-- 2. Empleado de Preparación (Cocinero) -->
+          <div>
+            <h4 class="section-title"><i class="bi bi-egg-fried"></i> Empleado de Preparación (Cocinero)</h4>
+            
+            <div class="employee-assignment-box" *ngIf="authService.getCurrentRole() === 'admin'">
+              <select 
+                [(ngModel)]="tempEmpleadoPreparacionId"
+                class="form-control select-employee"
+                style="padding: 10px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); width: 100%; font-size: 14px; color: var(--text-primary);"
+              >
+                <option value="">-- Sin asignar --</option>
+                <option *ngFor="let emp of getCocineros()" [value]="emp.id">
+                  {{ emp.nombres }} {{ emp.apellidos }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="assigned-employee-read" *ngIf="authService.getCurrentRole() !== 'admin'">
+              <div class="assigned-user-info" *ngIf="selectedPedido.empleadoPreparacion" style="display: flex; align-items: center; gap: 8px;">
+                <div class="avatar-sm d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle font-weight-bold" style="width: 32px; height: 32px; font-size: 12px;">
+                  {{ getInitials(selectedPedido.empleadoPreparacion.nombres, selectedPedido.empleadoPreparacion.apellidos) }}
+                </div>
+                <span class="font-weight-bold" style="font-size: 14px; color: var(--text-primary);">{{ selectedPedido.empleadoPreparacion.nombres }} {{ selectedPedido.empleadoPreparacion.apellidos }}</span>
+              </div>
+              <p *ngIf="!selectedPedido.empleadoPreparacion" class="text-muted italic small mb-0">Sin asignar</p>
+            </div>
           </div>
         </div>
       </div>
@@ -334,11 +365,22 @@
 
     <div *ngIf="selectedPedido" modal-footer>
       <button class="btn btn-secondary" (click)="closeDetail()">Cerrar</button>
+
+      <!-- Botón Guardar Asignación (solo admin) -->
+      <button
+        *ngIf="authService.getCurrentRole() === 'admin' && selectedPedido.estado !== 'entregado' && selectedPedido.estado !== 'cancelado'"
+        class="btn btn-save-asignacion"
+        (click)="guardarAsignacion()"
+        [disabled]="isSavingAsignacion"
+      >
+        <i class="bi bi-person-check-fill"></i>
+        {{ isSavingAsignacion ? 'Guardando...' : 'Guardar Asignación' }}
+      </button>
       
       <button 
         class="btn btn-danger" 
         *ngIf="selectedPedido.estado !== 'entregado' && selectedPedido.estado !== 'cancelado'" 
-        (click)="cancelarPedido(selectedPedido)"
+        (click)="solicitarCancelacion(selectedPedido)"
       >
         Cancelar Pedido
       </button>
@@ -568,5 +610,31 @@
       </button>
     </div>
   </app-modal>
+
+<!-- ==================== MODAL DE CONFIRMACIÓN: CANCELAR PEDIDO ==================== -->
+<div *ngIf="showCancelConfirmModal" class="cancel-confirm-overlay" (click)="cerrarCancelConfirm()">
+  <div class="cancel-confirm-card" (click)="$event.stopPropagation()">
+    <!-- Icono de advertencia -->
+    <div class="cancel-confirm-icon">
+      <span>⚠️</span>
+    </div>
+    <!-- Título -->
+    <h3 class="cancel-confirm-title">Cancelar Pedido #{{ pedidoPorCancelar?.id }}</h3>
+    <p class="cancel-confirm-subtitle">
+      Esta acción es irreversible. El pedido pasará a estado <strong>cancelado</strong>
+      y se restaurará el stock de los productos.
+    </p>
+    <p class="cancel-confirm-question">¿Está seguro de que desea continuar?</p>
+    <!-- Botones -->
+    <div class="cancel-confirm-actions">
+      <button class="btn btn-secondary" (click)="cerrarCancelConfirm()">
+        ← Volver
+      </button>
+      <button class="btn btn-danger" (click)="confirmarCancelacion()">
+        🗑️ Sí, cancelar pedido
+      </button>
+    </div>
+  </div>
+</div>
 
 </div>

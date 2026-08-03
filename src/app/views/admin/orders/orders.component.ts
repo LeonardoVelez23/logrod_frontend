@@ -59,6 +59,15 @@ export class OrdersComponent implements OnInit {
   paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia' = 'efectivo';
   paymentReference: string = '';
   isProcessingPayment: boolean = false;
+  isSavingAsignacion: boolean = false;
+
+  // Variables temporales para la asignación de empleados (string para compatibilidad con ngModel en select)
+  tempEmpleadoId: string = '';
+  tempEmpleadoPreparacionId: string = '';
+
+  // Modal de confirmación para cancelar pedido
+  showCancelConfirmModal: boolean = false;
+  pedidoPorCancelar: Pedido | null = null;
   
   // Para registrar un timer que actualice los minutos transcurridos en tiempo real
   private timerId: any;
@@ -132,16 +141,16 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  // Iniciar la preparación del pedido (Mueve a 'en preparación' y auto-asigna al empleado actual si no hay)
+  // Iniciar la preparación del pedido (Mueve a 'en preparación' y auto-asigna al cocinero actual si no hay)
   iniciarPreparacion(pedido: Pedido) {
-    const payload: { estado: string; empleado_id?: number } = {
+    const payload: { estado: string; empleado_id?: number; empleado_preparacion_id?: number } = {
       estado: 'en preparación'
     };
 
     const currentUser = this.authService.currentUser();
-    // Si no tiene empleado asignado y el usuario activo es empleado/admin, asignarlo
-    if (!pedido.empleado_id && currentUser && (currentUser.rol === 'empleado' || currentUser.rol === 'admin')) {
-      payload.empleado_id = currentUser.id;
+    // Si no tiene cocinero asignado y el usuario activo es empleado/admin, asignarlo a la preparación
+    if (!pedido.empleado_preparacion_id && currentUser && (currentUser.rol === 'empleado' || currentUser.rol === 'admin')) {
+      payload.empleado_preparacion_id = currentUser.id;
     }
 
     if (pedido.id) {
@@ -211,49 +220,101 @@ export class OrdersComponent implements OnInit {
   }
 
   // Cancelar el pedido
-  cancelarPedido(pedido: Pedido) {
-    if (confirm('¿Está seguro de que desea cancelar este pedido? Se devolverá el stock disponible.')) {
-      if (pedido.id) {
-        this.orderService.updatePedido(pedido.id, { estado: 'cancelado' }).subscribe({
-          next: (response) => {
-            if (response.success) {
-              this.loadPedidos();
-              this.closeDetail();
-              this.toastService.showSuccess('Pedido cancelado.');
-            }
-          },
-          error: (err) => {
-            this.toastService.showError('Error al cancelar pedido: ' + (err.error?.message || err.message));
-          }
-        });
-      }
-    }
+  // Paso 1: Mostrar modal de confirmación
+  solicitarCancelacion(pedido: Pedido) {
+    this.pedidoPorCancelar = pedido;
+    this.showCancelConfirmModal = true;
+    this.cdr.detectChanges();
   }
 
-  // Cambiar manualmente de empleado asignado desde el modal
-  onEmpleadoChange(pedidoId: number, event: Event) {
-    const select = event.target as HTMLSelectElement;
-    const empleadoId = select.value ? parseInt(select.value, 10) : null;
+  // Paso 2: Confirmar y ejecutar la cancelación
+  confirmarCancelacion() {
+    const pedido = this.pedidoPorCancelar;
+    if (!pedido?.id) return;
 
-    this.orderService.updatePedido(pedidoId, { empleado_id: empleadoId }).subscribe({
+    this.orderService.updatePedido(pedido.id, { estado: 'cancelado' }).subscribe({
       next: (response) => {
         if (response.success) {
+          this.showCancelConfirmModal = false;
+          this.pedidoPorCancelar = null;
           this.loadPedidos();
-          this.selectedPedido = response.data;
-          this.toastService.showSuccess('Empleado asignado correctamente.');
+          this.closeDetail();
+          this.toastService.showSuccess('Pedido cancelado correctamente.');
         }
       },
       error: (err) => {
-        this.toastService.showError('Error al asignar empleado: ' + (err.error?.message || err.message));
+        this.toastService.showError('Error al cancelar pedido: ' + (err.error?.message || err.message));
+      }
+    });
+  }
+
+  cerrarCancelConfirm() {
+    this.showCancelConfirmModal = false;
+    this.pedidoPorCancelar = null;
+    this.cdr.detectChanges();
+  }
+
+  // Guardar ambas asignaciones de empleados en una sola llamada
+  guardarAsignacion() {
+    if (!this.selectedPedido?.id) return;
+    this.isSavingAsignacion = true;
+
+    const empleadoId = this.tempEmpleadoId ? parseInt(this.tempEmpleadoId, 10) : null;
+    const empleadoPrepId = this.tempEmpleadoPreparacionId ? parseInt(this.tempEmpleadoPreparacionId, 10) : null;
+
+    this.orderService.updatePedido(this.selectedPedido.id, {
+      empleado_id: empleadoId,
+      empleado_preparacion_id: empleadoPrepId
+    }).subscribe({
+      next: (response) => {
+        this.isSavingAsignacion = false;
+        if (response.success) {
+          // Refrescar el pedido directamente desde el servidor para tener datos completos
+          this.orderService.getPedidoById(response.data.id!).subscribe({
+            next: (res) => {
+              if (res.success) {
+                this.selectedPedido = res.data;
+                this.tempEmpleadoId = res.data.empleado_id?.toString() ?? '';
+                this.tempEmpleadoPreparacionId = res.data.empleado_preparacion_id?.toString() ?? '';
+                this.cdr.detectChanges();
+              }
+            }
+          });
+          this.loadPedidos();
+          this.toastService.showSuccess('Asignación de personal guardada correctamente.');
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => {
+        this.isSavingAsignacion = false;
+        this.toastService.showError('Error al guardar asignación: ' + (err.error?.message || err.message));
+        this.cdr.detectChanges();
       }
     });
   }
 
   // Abrir modal de detalles
   openDetail(pedido: Pedido) {
+    // Abrir con datos parciales primero (UX rápida), luego refrescar desde servidor
     this.selectedPedido = pedido;
+    this.tempEmpleadoId = pedido.empleado_id?.toString() ?? '';
+    this.tempEmpleadoPreparacionId = pedido.empleado_preparacion_id?.toString() ?? '';
     this.showDetailModal = true;
     this.cdr.detectChanges();
+
+    // Traer datos completos del servidor (con objetos empleadoResponsable y empleadoPreparacion)
+    if (pedido.id) {
+      this.orderService.getPedidoById(pedido.id).subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.selectedPedido = res.data;
+            this.tempEmpleadoId = res.data.empleado_id?.toString() ?? '';
+            this.tempEmpleadoPreparacionId = res.data.empleado_preparacion_id?.toString() ?? '';
+            this.cdr.detectChanges();
+          }
+        }
+      });
+    }
   }
 
   // Cerrar modal de detalles
@@ -539,6 +600,31 @@ export class OrdersComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  // Filtrar empleados con cargos de Cocina/Preparación
+  getCocineros(): Empleado[] {
+    const list = this.empleados.filter(e => {
+      const cargo = (e.cargo || '').toLowerCase();
+      return cargo.includes('cocinero') || cargo.includes('cocina') || cargo.includes('chef') || cargo.includes('preparaci');
+    });
+    return list.length > 0 ? list : this.empleados;
+  }
+
+  // Filtrar empleados con cargos de Atención (Meseros, Cajeros, Repartidores)
+  getMeserosYCajeros(): Empleado[] {
+    const list = this.empleados.filter(e => {
+      const cargo = (e.cargo || '').toLowerCase();
+      return cargo.includes('mesero') || cargo.includes('cajero') || cargo.includes('atencion') || cargo.includes('repartidor') || cargo.includes('mesera');
+    });
+    if (list.length === 0) {
+      // Fallback: Cualquier empleado que no sea de cocina
+      return this.empleados.filter(e => {
+        const cargo = (e.cargo || '').toLowerCase();
+        return !(cargo.includes('cocinero') || cargo.includes('cocina') || cargo.includes('chef'));
+      });
+    }
+    return list;
   }
 }
 export { OrdersComponent as Orders };
