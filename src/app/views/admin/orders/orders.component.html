@@ -7,23 +7,33 @@
     </div>
     
     <div class="header-actions">
+      <!-- Filtro por Día -->
+      <div class="day-filter" *ngIf="!verTodosLosDias">
+        <input type="date" [(ngModel)]="selectedFecha" (ngModelChange)="cambiarFecha($event)" class="form-control day-filter-input" />
+        <button type="button" class="btn btn-secondary btn-sm" (click)="irAHoy()" title="Ir al día de hoy">Hoy</button>
+      </div>
+      <button type="button" class="day-filter-toggle" (click)="toggleVerTodosLosDias()">
+        {{ verTodosLosDias ? 'Ver solo un día' : 'Ver todos los días' }}
+      </button>
+
       <!-- Buscador -->
       <div class="search-box">
         <i class="bi bi-search search-icon"></i>
-        <input 
-          type="text" 
-          [(ngModel)]="searchTerm" 
-          placeholder="Buscar pedido por ID, cliente..." 
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Buscar pedido por ID, cliente..."
           class="form-control search-input"
         />
       </div>
-      
-      <button class="btn btn-primary create-order-btn" (click)="openCreateModal()" title="Registrar un nuevo pedido">
+
+      <button *ngIf="puedeCrearPedidos" class="btn btn-primary create-order-btn" (click)="openCreateModal()" title="Registrar un nuevo pedido">
         <i class="bi bi-plus-lg"></i> + Nuevo Pedido
       </button>
 
-      <button class="btn btn-secondary refresh-btn" (click)="loadPedidos()" title="Recargar pedidos">
-        <i class="bi bi-arrow-clockwise"></i> Recargar
+      <button class="btn btn-secondary refresh-btn" [disabled]="isLoadingPedidos" (click)="loadPedidos()" title="Recargar pedidos">
+        <span class="btn-spinner me-1" *ngIf="isLoadingPedidos"></span>
+        <i class="bi bi-arrow-clockwise" *ngIf="!isLoadingPedidos"></i> Recargar
       </button>
     </div>
   </div>
@@ -45,7 +55,7 @@
         <div 
           *ngFor="let pedido of getPedidosPorEstados(['solicitado', 'confirmado'])" 
           class="order-card"
-          (dblclick)="openDetail(pedido)"
+          (click)="openDetail(pedido)"
         >
           <div class="card-top">
             <span class="order-id">#{{ pedido.id }}</span>
@@ -58,7 +68,7 @@
           
           <div class="products-list">
             <p *ngFor="let det of pedido.detalles" class="product-item">
-              🍔 <span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
+              <i class="bi bi-tag-fill me-1 small"></i><span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
             </p>
           </div>
 
@@ -67,9 +77,10 @@
               <i class="bi bi-clock"></i> {{ getTiempoTranscurrido(pedido.createdAt) }}
             </div>
             
-            <button 
-              class="action-btn btn-start" 
-              (click)="iniciarPreparacion(pedido)"
+            <button
+              *ngIf="puedeGestionarEstado"
+              class="action-btn btn-start"
+              (click)="iniciarPreparacion(pedido); $event.stopPropagation()"
               title="Iniciar Preparación"
             >
               <i class="bi bi-play-fill"></i>
@@ -97,7 +108,7 @@
         <div 
           *ngFor="let pedido of getPedidosPorEstados(['en preparación'])" 
           class="order-card border-preparacion"
-          (dblclick)="openDetail(pedido)"
+          (click)="openDetail(pedido)"
         >
           <div class="card-top">
             <span class="order-id">#{{ pedido.id }}</span>
@@ -110,7 +121,7 @@
           
           <div class="products-list">
             <p *ngFor="let det of pedido.detalles" class="product-item">
-              🍔 <span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
+              <i class="bi bi-tag-fill me-1 small"></i><span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
             </p>
           </div>
 
@@ -124,7 +135,7 @@
               <div class="progress-bar-fill" [style.width.%]="getProgreso(pedido.createdAt)"></div>
             </div>
             <span class="elapsed-time-text">
-              ⌛ Preparando ({{ getMinutosTranscurridos(pedido.createdAt) }}m transcurridos)
+              <i class="bi bi-hourglass-split me-1"></i>Preparando ({{ getMinutosTranscurridos(pedido.createdAt) }}m transcurridos)
             </span>
           </div>
 
@@ -138,9 +149,10 @@
               </span>
             </div>
             
-            <button 
-              class="btn-mark-ready" 
-              (click)="marcarListo(pedido)"
+            <button
+              *ngIf="puedeGestionarEstado"
+              class="btn-mark-ready"
+              (click)="marcarListo(pedido); $event.stopPropagation()"
             >
               Listo
             </button>
@@ -167,7 +179,7 @@
         <div 
           *ngFor="let pedido of getPedidosPorEstados(['listo'])" 
           class="order-card border-listo"
-          (dblclick)="openDetail(pedido)"
+          (click)="openDetail(pedido)"
         >
           <div class="card-top">
             <span class="order-id">#{{ pedido.id }}</span>
@@ -183,7 +195,7 @@
           
           <div class="products-list">
             <p *ngFor="let det of pedido.detalles" class="product-item">
-              🍔 <span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
+              <i class="bi bi-tag-fill me-1 small"></i><span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
             </p>
           </div>
 
@@ -197,9 +209,10 @@
               </span>
             </div>
             
-            <button 
-              class="btn-deliver" 
-              (click)="entregarPedido(pedido)"
+            <button
+              *ngIf="puedeEntregar"
+              class="btn-deliver"
+              (click)="entregarPedido(pedido); $event.stopPropagation()"
             >
               Entregar <i class="bi bi-arrow-right-short"></i>
             </button>
@@ -215,265 +228,467 @@
   </div>
 
   <!-- Modal de Detalle de Pedido -->
-  <div class="modal-backdrop" *ngIf="showDetailModal && selectedPedido">
-    <div class="glass-card detail-modal animate-fade-in">
-      <div class="modal-header">
-        <h3>Detalle del Pedido #{{ selectedPedido.id }}</h3>
-        <button class="close-btn" (click)="closeDetail()">&times;</button>
+  <app-modal 
+    [isOpen]="showDetailModal && !!selectedPedido" 
+    [title]="selectedPedido ? 'Detalle del Pedido #' + selectedPedido.id : 'Detalle del Pedido'" 
+    size="lg"
+    (onClose)="closeDetail()"
+  >
+    <div *ngIf="selectedPedido" modal-body>
+      <!-- Fila Cliente -->
+      <div class="info-section">
+        <h4 class="section-title"><i class="bi bi-person-fill"></i> Datos del Cliente</h4>
+        <div class="client-details">
+          <div class="detail-row">
+            <span class="detail-label">Nombre:</span>
+            <span class="detail-val">{{ selectedPedido.cliente?.nombres }} {{ selectedPedido.cliente?.apellidos }}</span>
+          </div>
+          <div class="detail-row" *ngIf="!esCocinero">
+            <span class="detail-label">Identificación:</span>
+            <span class="detail-val">{{ selectedPedido.cliente?.identificacion }}</span>
+          </div>
+          <div class="detail-row" *ngIf="!esCocinero">
+            <span class="detail-label">Correo:</span>
+            <span class="detail-val">{{ selectedPedido.cliente?.correo_electronico }}</span>
+          </div>
+          <div class="detail-row" *ngIf="!esCocinero && selectedPedido.cliente?.telefono">
+            <span class="detail-label">Teléfono:</span>
+            <span class="detail-val">{{ selectedPedido.cliente?.telefono }}</span>
+          </div>
+        </div>
       </div>
 
-      <div class="modal-body custom-scrollbar">
-        <!-- Fila Cliente -->
-        <div class="info-section">
-          <h4 class="section-title"><i class="bi bi-person-fill"></i> Datos del Cliente</h4>
-          <div class="client-details">
+      <!-- Fila Productos -->
+      <div class="info-section">
+        <h4 class="section-title"><i class="bi bi-card-list"></i> Resumen de Productos</h4>
+        <div class="products-table-wrapper">
+          <table class="products-table">
+            <thead>
+              <tr>
+                <th>Cant.</th>
+                <th>Producto</th>
+                <th class="text-end" *ngIf="!esCocinero">Precio U.</th>
+                <th class="text-end" *ngIf="!esCocinero">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let det of selectedPedido.detalles">
+                <td class="qty-col">{{ det.cantidad }}</td>
+                <td>{{ det.producto?.nombre }}</td>
+                <td class="text-end" *ngIf="!esCocinero">${{ det.precio_unitario | number:'1.2-2' }}</td>
+                <td class="text-end" *ngIf="!esCocinero">${{ det.subtotal | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="order-total-bar" *ngIf="!esCocinero">
+          <span>Total a Pagar</span>
+          <span class="total-price">${{ selectedPedido.valor_total | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <!-- Fila Información Técnica y Estado -->
+      <div class="info-section row g-3">
+        <div class="col-md-6">
+          <h4 class="section-title"><i class="bi bi-info-circle-fill"></i> Estado General</h4>
+          <div class="status-details">
             <div class="detail-row">
-              <span class="detail-label">Nombre:</span>
-              <span class="detail-val">{{ selectedPedido.cliente?.nombres }} {{ selectedPedido.cliente?.apellidos }}</span>
+              <span class="detail-label">Fecha/Hora:</span>
+              <span class="detail-val">{{ selectedPedido.fecha }} {{ selectedPedido.hora }}</span>
             </div>
             <div class="detail-row">
-              <span class="detail-label">Identificación:</span>
-              <span class="detail-val">{{ selectedPedido.cliente?.identificacion }}</span>
+              <span class="detail-label">Modalidad:</span>
+              <span class="badge" [ngClass]="selectedPedido.modalidad === 'presencial' ? 'badge-info' : 'badge-warning'">
+                {{ selectedPedido.modalidad | uppercase }}
+              </span>
             </div>
             <div class="detail-row">
-              <span class="detail-label">Correo:</span>
-              <span class="detail-val">{{ selectedPedido.cliente?.correo_electronico }}</span>
-            </div>
-            <div class="detail-row" *ngIf="selectedPedido.cliente?.telefono">
-              <span class="detail-label">Teléfono:</span>
-              <span class="detail-val">{{ selectedPedido.cliente?.telefono }}</span>
+              <span class="detail-label">Estado:</span>
+              <span class="badge" [ngClass]="{
+                'badge-warning': selectedPedido.estado === 'solicitado' || selectedPedido.estado === 'confirmado',
+                'badge-info': selectedPedido.estado === 'en preparación',
+                'badge-success': selectedPedido.estado === 'listo',
+                'badge-danger': selectedPedido.estado === 'cancelado',
+                'badge-secondary': selectedPedido.estado === 'entregado'
+              }">{{ selectedPedido.estado | uppercase }}</span>
             </div>
           </div>
         </div>
 
-        <!-- Fila Productos -->
-        <div class="info-section">
-          <h4 class="section-title"><i class="bi bi-card-list"></i> Resumen de Productos</h4>
-          <div class="products-table-wrapper">
-            <table class="products-table">
-              <thead>
-                <tr>
-                  <th>Cant.</th>
-                  <th>Producto</th>
-                  <th class="text-end">Precio U.</th>
-                  <th class="text-end">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let det of selectedPedido.detalles">
-                  <td class="qty-col">{{ det.cantidad }}</td>
-                  <td>{{ det.producto?.nombre }}</td>
-                  <td class="text-end">${{ det.precio_unitario | number:'1.2-2' }}</td>
-                  <td class="text-end">${{ det.subtotal | number:'1.2-2' }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="order-total-bar">
-            <span>Total a Pagar</span>
-            <span class="total-price">${{ selectedPedido.valor_total | number:'1.2-2' }}</span>
-          </div>
-        </div>
-
-        <!-- Fila Información Técnica y Estado -->
-        <div class="info-section row g-3">
-          <div class="col-md-6">
-            <h4 class="section-title"><i class="bi bi-info-circle-fill"></i> Estado General</h4>
-            <div class="status-details">
-              <div class="detail-row">
-                <span class="detail-label">Fecha/Hora:</span>
-                <span class="detail-val">{{ selectedPedido.fecha }} {{ selectedPedido.hora }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Modalidad:</span>
-                <span class="badge" [ngClass]="selectedPedido.modalidad === 'presencial' ? 'badge-info' : 'badge-warning'">
-                  {{ selectedPedido.modalidad | uppercase }}
-                </span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Estado:</span>
-                <span class="badge" [ngClass]="{
-                  'badge-warning': selectedPedido.estado === 'solicitado' || selectedPedido.estado === 'confirmado',
-                  'badge-info': selectedPedido.estado === 'en preparación',
-                  'badge-success': selectedPedido.estado === 'listo',
-                  'badge-danger': selectedPedido.estado === 'cancelado',
-                  'badge-secondary': selectedPedido.estado === 'entregado'
-                }">{{ selectedPedido.estado | uppercase }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Asignar Responsable (Solo Admin/Empleado) -->
-          <div class="col-md-6">
-            <h4 class="section-title"><i class="bi bi-person-badge"></i> Empleado Asignado</h4>
+        <!-- Asignar Responsable (Solo Admin/Empleado) -->
+        <div class="col-md-6">
+          <!-- 1. Empleado de Atención (Mesero) -->
+          <div class="mb-3">
+            <h4 class="section-title"><i class="bi bi-person-badge-fill"></i> Empleado de Atención (Mesero)</h4>
             
             <div class="employee-assignment-box" *ngIf="authService.getCurrentRole() === 'admin'">
               <select 
-                [value]="selectedPedido.empleado_id || ''" 
-                (change)="onEmpleadoChange(selectedPedido.id!, $event)"
+                [(ngModel)]="tempEmpleadoId"
                 class="form-control select-employee"
+                style="padding: 10px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); width: 100%; font-size: 14px; color: var(--text-primary);"
               >
                 <option value="">-- Sin asignar --</option>
-                <option *ngFor="let emp of empleados" [value]="emp.id">
-                  {{ emp.nombres }} {{ emp.apellidos }} ({{ emp.cargo || 'Personal' }})
+                <option *ngFor="let emp of getMeserosYCajeros()" [value]="emp.id">
+                  {{ emp.nombres }} {{ emp.apellidos }}
                 </option>
               </select>
             </div>
             
             <div class="assigned-employee-read" *ngIf="authService.getCurrentRole() !== 'admin'">
-              <div class="assigned-user-info" *ngIf="selectedPedido.empleadoResponsable">
-                <div class="avatar-sm d-inline-flex me-2">
+              <div class="assigned-user-info" *ngIf="selectedPedido.empleadoResponsable" style="display: flex; align-items: center; gap: 8px;">
+                <div class="avatar-sm d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle font-weight-bold" style="width: 32px; height: 32px; font-size: 12px;">
                   {{ getInitials(selectedPedido.empleadoResponsable.nombres, selectedPedido.empleadoResponsable.apellidos) }}
                 </div>
-                <span>{{ selectedPedido.empleadoResponsable.nombres }} {{ selectedPedido.empleadoResponsable.apellidos }}</span>
+                <span class="font-weight-bold" style="font-size: 14px; color: var(--text-primary);">{{ selectedPedido.empleadoResponsable.nombres }} {{ selectedPedido.empleadoResponsable.apellidos }}</span>
               </div>
-              <p *ngIf="!selectedPedido.empleadoResponsable" class="text-muted italic">Sin asignar</p>
+              <p *ngIf="!selectedPedido.empleadoResponsable" class="text-muted italic small mb-0">Sin asignar</p>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeDetail()">Cerrar</button>
-        
-        <button 
-          class="btn btn-danger" 
-          *ngIf="selectedPedido.estado !== 'entregado' && selectedPedido.estado !== 'cancelado'" 
-          (click)="cancelarPedido(selectedPedido)"
-        >
-          Cancelar Pedido
-        </button>
-
-        <button 
-          class="btn btn-primary" 
-          *ngIf="selectedPedido.estado === 'solicitado' || selectedPedido.estado === 'confirmado'" 
-          (click)="iniciarPreparacion(selectedPedido)"
-        >
-          <i class="bi bi-play-fill"></i> Iniciar Preparación
-        </button>
-
-        <button 
-          class="btn btn-primary" 
-          *ngIf="selectedPedido.estado === 'en preparación'" 
-          (click)="marcarListo(selectedPedido)"
-        >
-          <i class="bi bi-check-circle-fill"></i> Marcar Listo
-        </button>
-
-        <button 
-          class="btn btn-primary" 
-          *ngIf="selectedPedido.estado === 'listo'" 
-          (click)="entregarPedido(selectedPedido)"
-        >
-          Entregar Pedido <i class="bi bi-arrow-right-short"></i>
-        </button>
-      </div>
-    </div>
-  <!-- Modal de Registrar Nuevo Pedido -->
-  <div class="modal-backdrop" *ngIf="showCreateModal">
-    <div class="glass-card detail-modal create-modal animate-fade-in">
-      <div class="modal-header">
-        <h3>📝 Registrar Nuevo Pedido</h3>
-        <button class="close-btn" (click)="closeCreateModal()">&times;</button>
-      </div>
-
-      <div class="modal-body custom-scrollbar">
-        <!-- Selección de Cliente y Modalidad -->
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <label class="form-label font-semibold text-sm mb-1">Cliente</label>
-            <select [(ngModel)]="newOrderClienteId" class="form-control">
-              <option *ngIf="clientes.length === 0" [ngValue]="null">No hay clientes registrados</option>
-              <option *ngFor="let c of clientes" [value]="c.id">
-                {{ c.nombres }} {{ c.apellidos }} (DNI: {{ c.identificacion }})
-              </option>
-            </select>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label font-semibold text-sm mb-1">Modalidad de Servicio</label>
-            <select [(ngModel)]="newOrderModalidad" class="form-control">
-              <option value="presencial">🍽️ COMEDOR (Presencial)</option>
-              <option value="en línea">🛍️ PARA LLEVAR (En línea)</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Selección y Adición de Productos -->
-        <div class="info-section mb-4">
-          <h4 class="section-title">🍔 Seleccionar Productos</h4>
-          <div class="row g-2 align-items-end mb-3">
-            <div class="col-md-7">
-              <label class="form-label text-xs mb-1">Producto disponible</label>
-              <select [(ngModel)]="selectedProductId" class="form-control">
-                <option *ngIf="productosDisponibles.length === 0" [ngValue]="null">No hay productos disponibles con stock</option>
-                <option *ngFor="let p of productosDisponibles" [value]="p.id">
-                  {{ p.nombre }} - ${{ p.precio | number:'1.2-2' }} (Stock: {{ p.cantidad_disponible }})
+          <!-- 2. Empleado de Preparación (Cocinero) -->
+          <div>
+            <h4 class="section-title"><i class="bi bi-egg-fried"></i> Empleado de Preparación (Cocinero)</h4>
+            
+            <div class="employee-assignment-box" *ngIf="authService.getCurrentRole() === 'admin'">
+              <select 
+                [(ngModel)]="tempEmpleadoPreparacionId"
+                class="form-control select-employee"
+                style="padding: 10px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); width: 100%; font-size: 14px; color: var(--text-primary);"
+              >
+                <option value="">-- Sin asignar --</option>
+                <option *ngFor="let emp of getCocineros()" [value]="emp.id">
+                  {{ emp.nombres }} {{ emp.apellidos }}
                 </option>
               </select>
             </div>
-            <div class="col-md-3">
-              <label class="form-label text-xs mb-1">Cantidad</label>
-              <input type="number" [(ngModel)]="selectedQuantity" min="1" max="50" class="form-control" />
+            
+            <div class="assigned-employee-read" *ngIf="authService.getCurrentRole() !== 'admin'">
+              <div class="assigned-user-info" *ngIf="selectedPedido.empleadoPreparacion" style="display: flex; align-items: center; gap: 8px;">
+                <div class="avatar-sm d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle font-weight-bold" style="width: 32px; height: 32px; font-size: 12px;">
+                  {{ getInitials(selectedPedido.empleadoPreparacion.nombres, selectedPedido.empleadoPreparacion.apellidos) }}
+                </div>
+                <span class="font-weight-bold" style="font-size: 14px; color: var(--text-primary);">{{ selectedPedido.empleadoPreparacion.nombres }} {{ selectedPedido.empleadoPreparacion.apellidos }}</span>
+              </div>
+              <p *ngIf="!selectedPedido.empleadoPreparacion" class="text-muted italic small mb-0">Sin asignar</p>
             </div>
-            <div class="col-md-2">
-              <button class="btn btn-primary w-100" (click)="addItemToNewOrder()">
-                + Agregar
-              </button>
-            </div>
-          </div>
-
-          <!-- Tabla de Productos Seleccionados en el Borrador -->
-          <div class="products-table-wrapper">
-            <table class="products-table">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th class="text-center">Cant.</th>
-                  <th class="text-end">Precio U.</th>
-                  <th class="text-end">Subtotal</th>
-                  <th class="text-center">Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let item of newOrderItems; let i = index">
-                  <td>{{ item.producto.nombre }}</td>
-                  <td class="text-center">{{ item.cantidad }}</td>
-                  <td class="text-end">${{ item.precio_unitario | number:'1.2-2' }}</td>
-                  <td class="text-end">${{ item.subtotal | number:'1.2-2' }}</td>
-                  <td class="text-center">
-                    <button class="btn-remove-item" (click)="removeItemFromNewOrder(i)" title="Eliminar ítem">
-                      🗑️
-                    </button>
-                  </td>
-                </tr>
-                <tr *ngIf="newOrderItems.length === 0">
-                  <td colspan="5" class="text-center text-muted py-3">
-                    No se han agregado productos al pedido aún.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="order-total-bar mt-3">
-            <span>Total del Pedido</span>
-            <span class="total-price">${{ getNewOrderTotal() | number:'1.2-2' }}</span>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeCreateModal()">Cancelar</button>
-        <button 
-          class="btn btn-primary" 
-          [disabled]="isSubmittingOrder || newOrderItems.length === 0 || !newOrderClienteId"
-          (click)="guardarNuevoPedido()"
-        >
-          <span *ngIf="!isSubmittingOrder">💾 Registrar Pedido</span>
-          <span *ngIf="isSubmittingOrder">Guardando...</span>
-        </button>
+    <div *ngIf="selectedPedido" modal-footer>
+      <button class="btn btn-secondary" (click)="closeDetail()">Cerrar</button>
+
+      <!-- Botón Guardar Asignación (solo admin) -->
+      <button
+        *ngIf="authService.getCurrentRole() === 'admin' && selectedPedido.estado !== 'entregado' && selectedPedido.estado !== 'cancelado'"
+        class="btn btn-save-asignacion"
+        (click)="guardarAsignacion()"
+        [disabled]="isSavingAsignacion"
+      >
+        <span class="btn-spinner me-1" *ngIf="isSavingAsignacion"></span>
+        <i class="bi bi-person-check-fill" *ngIf="!isSavingAsignacion"></i>
+        {{ isSavingAsignacion ? 'Guardando...' : 'Guardar Asignación' }}
+      </button>
+      
+      <button
+        class="btn btn-danger"
+        *ngIf="puedeCancelar && selectedPedido.estado !== 'entregado' && selectedPedido.estado !== 'cancelado'"
+        (click)="solicitarCancelacion(selectedPedido)"
+      >
+        Cancelar Pedido
+      </button>
+
+      <button
+        class="btn btn-primary"
+        *ngIf="puedeGestionarEstado && (selectedPedido.estado === 'solicitado' || selectedPedido.estado === 'confirmado')"
+        (click)="iniciarPreparacion(selectedPedido)"
+      >
+        <i class="bi bi-play-fill"></i> Iniciar Preparación
+      </button>
+
+      <button
+        class="btn btn-primary"
+        *ngIf="puedeGestionarEstado && selectedPedido.estado === 'en preparación'"
+        (click)="marcarListo(selectedPedido)"
+      >
+        <i class="bi bi-check-circle-fill"></i> Marcar Listo
+      </button>
+
+      <button
+        class="btn btn-primary"
+        *ngIf="puedeEntregar && selectedPedido.estado === 'listo'"
+        (click)="entregarPedido(selectedPedido)"
+      >
+        Entregar Pedido <i class="bi bi-arrow-right-short"></i>
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- Modal de Registrar Nuevo Pedido -->
+  <app-modal 
+    [isOpen]="showCreateModal" 
+    title="Registrar Nuevo Pedido" 
+    size="lg"
+    (onClose)="closeCreateModal()"
+  >
+    <div modal-body>
+      <!-- Selección de Cliente y Modalidad -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label font-semibold text-sm mb-1">Cliente</label>
+          <select [(ngModel)]="newOrderClienteId" class="form-control">
+            <option *ngIf="clientes.length === 0" [ngValue]="null">No hay clientes registrados</option>
+            <option *ngFor="let c of clientes" [value]="c.id">
+              {{ c.nombres }} {{ c.apellidos }} (DNI: {{ c.identificacion }})
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label font-semibold text-sm mb-1">Modalidad de Servicio</label>
+          <select [(ngModel)]="newOrderModalidad" class="form-control">
+            <option value="presencial">COMEDOR (Presencial)</option>
+            <option value="en línea">PARA LLEVAR (En línea)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Selección y Adición de Productos: mini-vista tipo Catálogo -->
+      <div class="info-section mb-4">
+        <h4 class="section-title"><i class="bi bi-bag-plus-fill me-1"></i> Seleccionar Productos</h4>
+
+        <input
+          type="text"
+          [(ngModel)]="newOrderProductSearch"
+          placeholder="Buscar producto..."
+          class="form-control mb-2"
+        />
+
+        <div class="mini-category-chips mb-3">
+          <button type="button" class="mini-chip" [class.active]="!newOrderCategoriaId" (click)="newOrderCategoriaId = ''">
+            Todas
+          </button>
+          <button
+            type="button"
+            class="mini-chip"
+            *ngFor="let cat of getCategoriasDisponibles()"
+            [class.active]="newOrderCategoriaId === cat.id.toString()"
+            (click)="newOrderCategoriaId = cat.id.toString()"
+          >
+            {{ cat.nombre }}
+          </button>
+        </div>
+
+        <div class="mini-product-grid mb-3">
+          <div
+            *ngFor="let p of getProductosDisponiblesFiltrados()"
+            class="mini-product-card"
+            [class.selected]="selectedProductId === p.id"
+            (click)="seleccionarProductoNuevoPedido(p)"
+          >
+            <img *ngIf="p.imagen_url" [src]="p.imagen_url" [alt]="p.nombre" class="mini-product-image" />
+            <div *ngIf="!p.imagen_url" class="mini-product-image mini-product-image-empty">
+              <i class="bi bi-image"></i>
+            </div>
+            <div class="mini-product-info">
+              <span class="mini-product-name">{{ p.nombre }}</span>
+              <span class="mini-product-price">${{ p.precio | number:'1.2-2' }}</span>
+              <span class="mini-product-stock">Stock: {{ p.cantidad_disponible }}</span>
+            </div>
+          </div>
+
+          <div *ngIf="getProductosDisponiblesFiltrados().length === 0" class="mini-catalog-empty">
+            No hay productos disponibles en esta categoría.
+          </div>
+        </div>
+
+        <div class="row g-2 align-items-end mb-3">
+          <div class="col-md-3">
+            <label class="form-label text-xs mb-1">Cantidad</label>
+            <input type="number" [(ngModel)]="selectedQuantity" min="1" max="50" class="form-control" />
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-primary w-100" [disabled]="!selectedProductId" (click)="addItemToNewOrder()">
+              + Agregar
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabla de Productos Seleccionados en el Borrador -->
+        <div class="products-table-wrapper">
+          <table class="products-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-end">Precio U.</th>
+                <th class="text-end">Subtotal</th>
+                <th class="text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of newOrderItems; let i = index">
+                <td>{{ item.producto.nombre }}</td>
+                <td class="text-center">{{ item.cantidad }}</td>
+                <td class="text-end">${{ item.precio_unitario | number:'1.2-2' }}</td>
+                <td class="text-end">${{ item.subtotal | number:'1.2-2' }}</td>
+                <td class="text-center">
+                  <button class="btn-remove-item" (click)="removeItemFromNewOrder(i)" title="Eliminar ítem">
+                    <i class="bi bi-trash-fill text-danger"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="newOrderItems.length === 0">
+                <td colspan="5" class="text-center text-muted py-3">
+                  No se han agregado productos al pedido aún.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="order-total-bar mt-3">
+          <span>Total del Pedido</span>
+          <span class="total-price">${{ getNewOrderTotal() | number:'1.2-2' }}</span>
+        </div>
       </div>
     </div>
+
+    <div modal-footer>
+      <button class="btn btn-secondary" (click)="closeCreateModal()">Cancelar</button>
+      <button 
+        class="btn btn-primary" 
+        [disabled]="isSubmittingOrder || newOrderItems.length === 0 || !newOrderClienteId"
+        (click)="guardarNuevoPedido()"
+      >
+        <span class="btn-spinner me-1" *ngIf="isSubmittingOrder"></span>
+        <span *ngIf="!isSubmittingOrder"><i class="bi bi-floppy-fill me-1"></i> Registrar Pedido</span>
+        <span *ngIf="isSubmittingOrder">Guardando...</span>
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- Modal de Pasarela de Cobro y Pago -->
+  <app-modal 
+    [isOpen]="showPaymentModal" 
+    title="Registrar Pago y Entregar Pedido" 
+    size="md"
+    (onClose)="closePaymentModal()"
+  >
+    <div *ngIf="pedidoPorPagar" modal-body>
+      <div class="payment-order-summary mb-4 text-center">
+        <h4 class="total-heading mb-1 text-muted">Total a Cobrar</h4>
+        <div class="payment-total-amount text-primary font-weight-bold" style="font-size: 32px; letter-spacing: -0.5px;">
+          ${{ pedidoPorPagar.valor_total | number:'1.2-2' }}
+        </div>
+        <p class="text-secondary small mt-2 mb-0">
+          Pedido <strong>#{{ pedidoPorPagar.id }}</strong> &bull; Cliente: <strong>{{ pedidoPorPagar.cliente?.nombres }} {{ pedidoPorPagar.cliente?.apellidos }}</strong>
+        </p>
+      </div>
+
+      <div class="form-group mb-3">
+        <label class="form-label font-weight-bold" style="font-size: 13px; text-transform: uppercase; color: var(--text-muted);"><i class="bi bi-wallet2"></i> Método de Pago</label>
+        <div class="payment-method-selector d-flex gap-2 justify-content-between mt-2">
+          <button 
+            type="button" 
+            class="btn flex-fill py-3" 
+            [class.btn-primary]="paymentMethod === 'efectivo'"
+            [class.btn-outline-secondary]="paymentMethod !== 'efectivo'"
+            (click)="paymentMethod = 'efectivo'"
+            style="border-radius: var(--border-radius-sm); font-weight: 600;"
+          >
+            <i class="bi bi-cash-stack me-1"></i> Efectivo
+          </button>
+          <button 
+            type="button" 
+            class="btn flex-fill py-3" 
+            [class.btn-primary]="paymentMethod === 'transferencia'"
+            [class.btn-outline-secondary]="paymentMethod !== 'transferencia'"
+            (click)="paymentMethod = 'transferencia'"
+            style="border-radius: var(--border-radius-sm); font-weight: 600;"
+          >
+            <i class="bi bi-bank me-1"></i> Transferencia
+          </button>
+          <button 
+            type="button" 
+            class="btn flex-fill py-3" 
+            [class.btn-primary]="paymentMethod === 'tarjeta'"
+            [class.btn-outline-secondary]="paymentMethod !== 'tarjeta'"
+            (click)="paymentMethod = 'tarjeta'"
+            style="border-radius: var(--border-radius-sm); font-weight: 600;"
+          >
+            <i class="bi bi-credit-card-fill me-1"></i> Tarjeta
+          </button>
+        </div>
+      </div>
+
+      <!-- Campo de Referencia para Transferencia o Tarjeta -->
+      <div class="form-group mb-3" *ngIf="paymentMethod === 'transferencia' || paymentMethod === 'tarjeta'">
+        <label for="paymentReference" class="form-label font-weight-bold" style="font-size: 13px; text-transform: uppercase; color: var(--text-muted);">
+          <i class="bi bi-hash"></i> Número de Referencia / Comprobante
+        </label>
+        <input 
+          id="paymentReference"
+          type="text" 
+          class="form-control" 
+          [(ngModel)]="paymentReference" 
+          placeholder="Ej: 9876543210"
+          required
+          style="padding: 12px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 14px;"
+        />
+        <div class="form-text text-muted small mt-1">
+          Ingrese el identificador único de la transacción bancaria o comprobante.
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="pedidoPorPagar" modal-footer class="w-100 d-flex gap-2">
+      <button 
+        type="button" 
+        class="btn btn-secondary flex-fill py-2" 
+        (click)="closePaymentModal()"
+        [disabled]="isProcessingPayment"
+      >
+        Cancelar
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-primary flex-fill py-2" 
+        (click)="procesarPagoYEntregar()"
+        [disabled]="isProcessingPayment"
+        style="background-color: var(--success); border-color: var(--success); font-weight: 600;"
+      >
+        <span class="btn-spinner me-1" *ngIf="isProcessingPayment"></span>
+        {{ isProcessingPayment ? 'Procesando...' : 'Registrar Pago y Entregar' }}
+      </button>
+    </div>
+  </app-modal>
+
+<!-- ==================== MODAL DE CONFIRMACIÓN: CANCELAR PEDIDO ==================== -->
+<div *ngIf="showCancelConfirmModal" class="cancel-confirm-overlay" (click)="cerrarCancelConfirm()">
+  <div class="cancel-confirm-card" (click)="$event.stopPropagation()">
+    <!-- Icono de advertencia -->
+    <div class="cancel-confirm-icon">
+      <i class="bi bi-exclamation-triangle-fill text-warning fs-3"></i>
+    </div>
+    <!-- Título -->
+    <h3 class="cancel-confirm-title">Cancelar Pedido #{{ pedidoPorCancelar?.id }}</h3>
+    <p class="cancel-confirm-subtitle">
+      Esta acción es irreversible. El pedido pasará a estado <strong>cancelado</strong>
+      y se restaurará el stock de los productos.
+    </p>
+    <p class="cancel-confirm-question">¿Está seguro de que desea continuar?</p>
+    <!-- Botones -->
+    <div class="cancel-confirm-actions">
+      <button class="btn btn-secondary" (click)="cerrarCancelConfirm()">
+        ← Volver
+      </button>
+      <button class="btn btn-danger" [disabled]="isCancellingOrder" (click)="confirmarCancelacion()">
+        <span class="btn-spinner me-1" *ngIf="isCancellingOrder"></span>
+        <i class="bi bi-trash-fill me-1" *ngIf="!isCancellingOrder"></i> {{ isCancellingOrder ? 'Cancelando...' : 'Sí, cancelar pedido' }}
+      </button>
+    </div>
   </div>
+</div>
 
 </div>

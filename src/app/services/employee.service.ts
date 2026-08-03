@@ -12,6 +12,7 @@ export interface Empleado {
   telefono?: string;
   cargo?: string;
   turno_trabajo?: string;
+  contrasenia?: string;
 }
 
 @Injectable({
@@ -26,5 +27,23 @@ export class EmployeeService {
 
   getEmpleadoById(id: number): Observable<{ success: boolean; data: Empleado }> {
     return this.http.get<{ success: boolean; data: Empleado }>(`${API_BASE_URL}/empleados/${id}`);
+  }
+
+  createEmpleado(empleado: Omit<Empleado, 'id'>): Observable<{ success: boolean; message: string; data: Empleado }> {
+    return this.http.post<{ success: boolean; message: string; data: Empleado }>(
+      `${API_BASE_URL}/empleados`,
+      empleado
+    );
+  }
+
+  updateEmpleado(id: number, empleado: Partial<Empleado>): Observable<{ success: boolean; message: string; data: Empleado }> {
+    return this.http.put<{ success: boolean; message: string; data: Empleado }>(
+      `${API_BASE_URL}/empleados/${id}`,
+      empleado
+    );
+  }
+
+  deleteEmpleado(id: number): Observable<{ success: boolean; message: string }> {
+    return this.http.delete<{ success: boolean; message: string }>(`${API_BASE_URL}/empleados/${id}`);
   }
 }

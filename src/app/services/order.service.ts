@@ -2,6 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../config/api.config';
+import { Cliente } from './client.service';
+import { Empleado } from './employee.service';
 
 export interface DetallePedido {
   id?: number;
@@ -27,24 +29,17 @@ export interface Pedido {
   valor_total: number;
   cliente_id: number;
   empleado_id?: number | null;
-  cliente?: {
-    id: number;
-    nombres: string;
-    apellidos: string;
-    identificacion: string;
-    correo_electronico: string;
-    telefono?: string;
-  };
-  empleadoResponsable?: {
-    id: number;
-    nombres: string;
-    apellidos: string;
-    cargo: string;
-  } | null;
+  empleado_preparacion_id?: number | null;
+  cliente?: Cliente;
+  empleadoResponsable?: Empleado | null;
+  empleadoPreparacion?: Empleado | null;
   detalles: DetallePedido[];
   createdAt?: string;
   updatedAt?: string;
+  metodo_pago?: 'efectivo' | 'tarjeta' | 'transferencia' | null;
+  numero_referencia?: string | null;
 }
+
 
 @Injectable({
   providedIn: 'root'
@@ -64,7 +59,7 @@ export class OrderService {
     return this.http.post<{ success: boolean; message: string; data: Pedido }>(`${API_BASE_URL}/pedidos`, pedido);
   }
 
-  updatePedido(id: number, data: { estado?: string; empleado_id?: number | null; modalidad?: string }): Observable<{ success: boolean; message: string; data: Pedido }> {
+  updatePedido(id: number, data: { estado?: string; empleado_id?: number | null; empleado_preparacion_id?: number | null; modalidad?: string }): Observable<{ success: boolean; message: string; data: Pedido }> {
     return this.http.put<{ success: boolean; message: string; data: Pedido }>(`${API_BASE_URL}/pedidos/${id}`, data);
   }
 

@@ -67,7 +67,7 @@ export class AuthService {
   }
 
   // Obtener el rol del usuario actual
-  getCurrentRole(): 'cliente' | 'empleado' | 'admin' | null {
+  getCurrentRole(): 'cliente' | 'empleado' | 'mesero' | 'cajero' | 'cocinero' | 'admin' | null {
     const user = this.currentUser();
     return user ? user.rol : null;
   }

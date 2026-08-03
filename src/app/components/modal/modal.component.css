@@ -1,0 +1,109 @@
+/* Fondo difuminado (Backdrop) */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(26, 54, 93, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+/* Contenedor del Modal */
+.modal-container {
+  width: 100%;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+/* Modificadores de tamaño del Modal */
+.modal-sm {
+  max-width: 440px;
+}
+
+.modal-md {
+  max-width: 600px;
+}
+
+.modal-lg {
+  max-width: 850px;
+}
+
+/* Cabecera del Modal */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0;
+}
+
+/* Botón de Cerrar (X) */
+.close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 24px;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: var(--danger);
+}
+
+/* Cuerpo del Modal */
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Pie del Modal */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Personalización de la barra de desplazamiento del modal */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}

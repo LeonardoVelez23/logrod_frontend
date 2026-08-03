@@ -2,17 +2,22 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService, Producto, Categoria } from '../../../services/product.service';
+import { ModalComponent } from '../../../components/modal/modal.component';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent],
   templateUrl: './products.component.html',
   styleUrl: './products.component.css'
 })
+
 export class ProductsComponent implements OnInit {
   private productService = inject(ProductService);
   private cdr = inject(ChangeDetectorRef); // Inyectar ChangeDetectorRef para forzar actualización de la UI
+  private toastService = inject(ToastService);
+
 
   productos: Producto[] = [];
   categorias: Categoria[] = [];
@@ -30,6 +35,16 @@ export class ProductsComponent implements OnInit {
   // Control de Modal de Eliminación
   showDeleteModal: boolean = false;
   productToDelete: Producto | null = null;
+
+  // Control de Modal de Nueva Categoría
+  showCategoryModal: boolean = false;
+  newCategoryNombre: string = '';
+  isSavingCategory: boolean = false;
+
+  // Imagen del producto (se sube aparte, después de crear/guardar los datos del producto)
+  selectedImageFile: File | null = null;
+  imagePreviewUrl: string | null = null;
+  uploadingImage: boolean = false;
 
   productoForm = {
     codigo: '',
@@ -106,6 +121,8 @@ export class ProductsComponent implements OnInit {
       estado: 'disponible',
       categoria_id: this.categorias[0]?.id || 0
     };
+    this.selectedImageFile = null;
+    this.imagePreviewUrl = null;
     this.showModal = true;
     this.cdr.detectChanges();
   }
@@ -123,8 +140,18 @@ export class ProductsComponent implements OnInit {
       estado: producto.estado,
       categoria_id: producto.categoria_id
     };
+    this.selectedImageFile = null;
+    this.imagePreviewUrl = producto.imagen_url || null;
     this.showModal = true;
     this.cdr.detectChanges();
+  }
+
+  // Formatear el código a máximo 8 caracteres alfanuméricos en mayúsculas
+  onCodigoInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const cleanValue = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+    this.productoForm.codigo = cleanValue;
+    input.value = cleanValue;
   }
 
   // Cerrar el modal y refrescar la UI
@@ -133,23 +160,125 @@ export class ProductsComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  // Métodos para crear una nueva categoría directamente desde el formulario de producto
+  openAddCategoryModal() {
+    this.newCategoryNombre = '';
+    this.showCategoryModal = true;
+    this.cdr.detectChanges();
+  }
+
+  closeCategoryModal() {
+    this.showCategoryModal = false;
+    this.newCategoryNombre = '';
+    this.isSavingCategory = false;
+    this.cdr.detectChanges();
+  }
+
+  guardarNuevaCategoria() {
+    const nombre = this.newCategoryNombre.trim();
+    if (!nombre) {
+      this.toastService.showWarning('El nombre de la categoría no puede estar vacío.');
+      return;
+    }
+
+    this.isSavingCategory = true;
+    this.productService.createCategoria(nombre).subscribe({
+      next: (response) => {
+        if (response.success) {
+          const newCat = response.data;
+          this.toastService.showSuccess(`Categoría "${newCat.nombre}" creada correctamente.`);
+          
+          // Cerrar modal inmediatamente y limpiar estado
+          this.closeCategoryModal();
+
+          // Recargar la lista de categorías y seleccionar la recién creada
+          this.productService.getCategorias().subscribe({
+            next: (catRes) => {
+              if (catRes.success) {
+                this.categorias = catRes.data;
+                if (newCat && newCat.id) {
+                  this.productoForm.categoria_id = newCat.id;
+                }
+                this.cdr.detectChanges();
+              }
+            },
+            error: () => {
+              this.cdr.detectChanges();
+            }
+          });
+        } else {
+          this.isSavingCategory = false;
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => {
+        this.isSavingCategory = false;
+        this.toastService.showError('Error al crear categoría: ' + (err.error?.message || err.message));
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // Validar y previsualizar la imagen seleccionada (aún no se sube al servidor)
+  onImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!tiposPermitidos.includes(file.type)) {
+      this.toastService.showWarning('Formato de imagen no soportado. Usa JPG, PNG, WEBP o GIF.');
+      input.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.toastService.showWarning('La imagen no puede superar los 5 MB.');
+      input.value = '';
+      return;
+    }
+
+    this.selectedImageFile = file;
+    this.imagePreviewUrl = URL.createObjectURL(file);
+  }
+
+  // Subir la imagen seleccionada para un producto ya creado/guardado
+  private subirImagenSiCorresponde(productoId: number) {
+    if (!this.selectedImageFile) return;
+
+    this.uploadingImage = true;
+    this.productService.uploadImagen(productoId, this.selectedImageFile).subscribe({
+      next: (response) => {
+        this.uploadingImage = false;
+        if (response.success) {
+          this.loadProductos();
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.uploadingImage = false;
+        this.cdr.detectChanges();
+        this.toastService.showError('El producto se guardó, pero la imagen no se pudo subir: ' + (err.error?.message || err.message));
+      }
+    });
+  }
+
   // Procesar el envío del formulario (Creación o Edición)
   onSubmit() {
     // Validaciones básicas de negocio en el cliente
     if (!this.productoForm.codigo.trim() || !this.productoForm.nombre.trim()) {
-      alert('El código y el nombre del producto son obligatorios.');
+      this.toastService.showWarning('El código y el nombre del producto son obligatorios.');
       return;
     }
     if (this.productoForm.precio <= 0) {
-      alert('El precio debe ser un número mayor a 0.');
+      this.toastService.showWarning('El precio debe ser un número mayor a 0.');
       return;
     }
     if (this.productoForm.cantidad_disponible < 0) {
-      alert('La cantidad disponible no puede ser negativa.');
+      this.toastService.showWarning('La cantidad disponible no puede ser negativa.');
       return;
     }
     if (!this.productoForm.categoria_id) {
-      alert('Debe seleccionar una categoría para el producto.');
+      this.toastService.showWarning('Debe seleccionar una categoría para el producto.');
       return;
     }
 
@@ -165,15 +294,18 @@ export class ProductsComponent implements OnInit {
 
     if (this.isEditMode && this.currentProductoId !== undefined) {
       // Actualizar producto existente
-      this.productService.updateProducto(this.currentProductoId, payload).subscribe({
+      const productoId = this.currentProductoId;
+      this.productService.updateProducto(productoId, payload).subscribe({
         next: (response) => {
           if (response.success) {
+            this.subirImagenSiCorresponde(productoId);
             this.loadProductos();
             this.closeModal();
+            this.toastService.showSuccess('Producto actualizado correctamente.');
           }
         },
         error: (err) => {
-          alert('Error al actualizar el producto: ' + (err.error?.message || err.message));
+          this.toastService.showError('Error al actualizar el producto: ' + (err.error?.message || err.message));
         }
       });
     } else {
@@ -181,12 +313,16 @@ export class ProductsComponent implements OnInit {
       this.productService.createProducto(payload).subscribe({
         next: (response) => {
           if (response.success) {
+            if (response.data.id !== undefined) {
+              this.subirImagenSiCorresponde(response.data.id);
+            }
             this.loadProductos();
             this.closeModal();
+            this.toastService.showSuccess('Producto creado correctamente.');
           }
         },
         error: (err) => {
-          alert('Error al crear el producto: ' + (err.error?.message || err.message));
+          this.toastService.showError('Error al crear el producto: ' + (err.error?.message || err.message));
         }
       });
     }
@@ -218,10 +354,11 @@ export class ProductsComponent implements OnInit {
         if (response.success) {
           this.loadProductos();
           this.closeDeleteModal();
+          this.toastService.showSuccess('Producto eliminado correctamente.');
         }
       },
       error: (err) => {
-        alert('Error al eliminar el producto: ' + (err.error?.message || err.message));
+        this.toastService.showError('Error al eliminar el producto: ' + (err.error?.message || err.message));
         this.closeDeleteModal();
       }
     });

@@ -1,0 +1,97 @@
+/* Contenedor flotante superior derecho */
+.toast-container {
+  position: fixed;
+  top: 90px; /* debajo del navbar que tiene 70px */
+  right: 24px;
+  z-index: 3000; /* por encima del modal que tiene 2000 */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 380px;
+  width: calc(100% - 48px);
+  pointer-events: none; /* permite clics a través del contenedor */
+}
+
+/* Tarjeta individual de notificación */
+.toast-card {
+  pointer-events: auto; /* reactiva clics en la tarjeta */
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--border-radius-md);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  border-left: 4px solid var(--accent);
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.2s ease;
+}
+
+/* Variaciones de colores por tipo */
+.toast-success {
+  border-left-color: var(--success);
+}
+
+.toast-danger {
+  border-left-color: var(--danger);
+}
+
+.toast-warning {
+  border-left-color: var(--warning);
+}
+
+.toast-info {
+  border-left-color: var(--info);
+}
+
+/* Iconos de Bootstrap */
+.toast-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-success .toast-icon { color: var(--success); }
+.toast-danger .toast-icon { color: var(--danger); }
+.toast-warning .toast-icon { color: var(--warning); }
+.toast-info .toast-icon { color: var(--info); }
+
+/* Contenido del mensaje */
+.toast-message {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Botón cerrar */
+.toast-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color var(--transition-fast);
+}
+
+.toast-close:hover {
+  color: var(--danger);
+}
+
+/* Animación slide in de derecha a izquierda */
+@keyframes slideIn {
+  from {
+    transform: translateX(120%) translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) translateY(0);
+    opacity: 1;
+  }
+}
