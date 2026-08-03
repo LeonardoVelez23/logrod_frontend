@@ -26,6 +26,11 @@ export class PagoService {
     return this.http.post<{ success: boolean; message: string; data: Pago }>(`${API_BASE_URL}/pagos`, pago);
   }
 
+  // Obtener todos los pagos registrados
+  getAllPagos(): Observable<{ success: boolean; data: Pago[] }> {
+    return this.http.get<{ success: boolean; data: Pago[] }>(`${API_BASE_URL}/pagos`);
+  }
+
   // Obtener la información del pago de un pedido específico
   getPagoByPedido(pedidoId: number): Observable<{ success: boolean; data: Pago }> {
     return this.http.get<{ success: boolean; data: Pago }>(`${API_BASE_URL}/pagos/pedido/${pedidoId}`);

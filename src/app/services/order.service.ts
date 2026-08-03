@@ -29,11 +29,15 @@ export interface Pedido {
   valor_total: number;
   cliente_id: number;
   empleado_id?: number | null;
+  empleado_preparacion_id?: number | null;
   cliente?: Cliente;
   empleadoResponsable?: Empleado | null;
+  empleadoPreparacion?: Empleado | null;
   detalles: DetallePedido[];
   createdAt?: string;
   updatedAt?: string;
+  metodo_pago?: 'efectivo' | 'tarjeta' | 'transferencia' | null;
+  numero_referencia?: string | null;
 }
 
 
@@ -55,7 +59,7 @@ export class OrderService {
     return this.http.post<{ success: boolean; message: string; data: Pedido }>(`${API_BASE_URL}/pedidos`, pedido);
   }
 
-  updatePedido(id: number, data: { estado?: string; empleado_id?: number | null; modalidad?: string }): Observable<{ success: boolean; message: string; data: Pedido }> {
+  updatePedido(id: number, data: { estado?: string; empleado_id?: number | null; empleado_preparacion_id?: number | null; modalidad?: string }): Observable<{ success: boolean; message: string; data: Pedido }> {
     return this.http.put<{ success: boolean; message: string; data: Pedido }>(`${API_BASE_URL}/pedidos/${id}`, data);
   }
 
