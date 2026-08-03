@@ -30,7 +30,8 @@
   
   /* Layout */
   --navbar-height: 70px;
-  --sidebar-width: 260px;
+  --sidebar-width: 300px;
+  --sidebar-collapsed-width: 88px;
   --border-radius-sm: 8px;
   --border-radius-md: 12px;
   --border-radius-lg: 16px;

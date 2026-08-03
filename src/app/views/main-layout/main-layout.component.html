@@ -3,14 +3,18 @@
   <nav class="navbar glass-card">
     <div class="navbar-left">
       <div class="logo">
-        <span class="logo-icon">🍽️</span>
+        <span class="material-symbols-outlined logo-icon">restaurant</span>
         <span class="logo-text">Sabor Politécnico</span>
       </div>
     </div>
     
     <div class="navbar-center" *ngIf="currentRole === 'cliente'">
-      <a routerLink="/catalog" routerLinkActive="active" class="nav-link">📋 Menú</a>
-      <a routerLink="/tracking" routerLinkActive="active" class="nav-link">🚚 Mi Pedido</a>
+      <a routerLink="/catalog" routerLinkActive="active" class="nav-link d-inline-flex align-items-center gap-1">
+        <span class="material-symbols-outlined fs-5">restaurant_menu</span> Menú
+      </a>
+      <a routerLink="/tracking" routerLinkActive="active" class="nav-link d-inline-flex align-items-center gap-1">
+        <span class="material-symbols-outlined fs-5">local_shipping</span> Mi Pedido
+      </a>
     </div>
 
     <div class="navbar-right">
@@ -21,51 +25,75 @@
           <span class="text-secondary text-uppercase" style="font-size: 0.7rem;">{{ currentUser.rol }}</span>
         </div>
         <div class="avatar" [title]="currentUser.correo_electronico">{{ userInitials }}</div>
-        <button (click)="logout()" class="btn-logout" title="Cerrar sesión">🚪</button>
+        <button (click)="logout()" class="btn-logout d-inline-flex align-items-center justify-content-center" title="Cerrar sesión">
+          <span class="material-symbols-outlined">logout</span>
+        </button>
       </div>
     </div>
   </nav>
 
   <!-- Main Body -->
   <div class="main-body">
-    <!-- Sidebar for admin / employee -->
-    <aside class="sidebar glass-card" *ngIf="currentRole === 'admin' || currentRole === 'empleado'">
+    <!-- Sidebar for admin / staff -->
+    <aside
+      class="sidebar glass-card"
+      [class.collapsed]="sidebarCollapsed()"
+      *ngIf="currentRole === 'admin' || currentRole === 'empleado' || currentRole === 'mesero' || currentRole === 'cajero' || currentRole === 'cocinero'"
+    >
       <div class="sidebar-header">
-        <h3>Panel {{ currentRole === 'admin' ? 'Admin' : 'Empleado' }}</h3>
+        <h3 class="link-label">Panel {{ panelTitle }}</h3>
+        <button
+          class="sidebar-toggle-btn"
+          (click)="toggleSidebar()"
+          [title]="sidebarCollapsed() ? 'Expandir menú' : 'Contraer menú'"
+        >
+          <span class="material-symbols-outlined">{{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}</span>
+        </button>
       </div>
       <ul class="sidebar-menu">
-        <li>
-          <a routerLink="/admin/dashboard" routerLinkActive="active" class="sidebar-link">
-            <span>📊</span> Dashboard
+        <!-- El mesero no tiene acceso al Dashboard -->
+        <li *ngIf="currentRole !== 'mesero'">
+          <a routerLink="/admin/dashboard" routerLinkActive="active" class="sidebar-link" [title]="sidebarCollapsed() ? 'Dashboard' : ''">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="link-label">Dashboard</span>
           </a>
         </li>
         <li>
-          <a routerLink="/admin/orders" routerLinkActive="active" class="sidebar-link">
-            <span>📦</span> Gestión de Pedidos
+          <a routerLink="/admin/orders" routerLinkActive="active" class="sidebar-link" [title]="sidebarCollapsed() ? 'Gestión de Pedidos' : ''">
+            <span class="material-symbols-outlined">list_alt</span>
+            <span class="link-label">Gestión de Pedidos</span>
           </a>
         </li>
-        <li>
-          <a routerLink="/admin/historial" routerLinkActive="active" class="sidebar-link">
-            <span>📋</span> Historial de Ventas
+        <!-- El mesero no tiene acceso al Historial de Ventas -->
+        <li *ngIf="currentRole !== 'mesero'">
+          <a routerLink="/admin/historial" routerLinkActive="active" class="sidebar-link" [title]="sidebarCollapsed() ? 'Historial de Ventas' : ''">
+            <span class="material-symbols-outlined">history</span>
+            <span class="link-label">Historial de Ventas</span>
           </a>
         </li>
         <!-- Only Admin can manage catalog -->
         <li *ngIf="currentRole === 'admin'">
-          <a routerLink="/admin/products" routerLinkActive="active" class="sidebar-link">
-            <span>🍔</span> Catálogo de Productos
+          <a routerLink="/admin/products" routerLinkActive="active" class="sidebar-link" [title]="sidebarCollapsed() ? 'Catálogo de Productos' : ''">
+            <span class="material-symbols-outlined">inventory_2</span>
+            <span class="link-label">Catálogo de Productos</span>
           </a>
         </li>
         <!-- Only Admin can manage users -->
         <li *ngIf="currentRole === 'admin'">
-          <a routerLink="/admin/usuarios" routerLinkActive="active" class="sidebar-link">
-            <span>👤</span> Control de Usuarios
+          <a routerLink="/admin/usuarios" routerLinkActive="active" class="sidebar-link" [title]="sidebarCollapsed() ? 'Control de Usuarios' : ''">
+            <span class="material-symbols-outlined">group</span>
+            <span class="link-label">Control de Usuarios</span>
           </a>
         </li>
       </ul>
     </aside>
 
     <!-- Main Content Area -->
-    <main class="content-area" [class.no-sidebar]="currentRole === 'cliente'">
+    <main
+      class="content-area"
+      [class.no-sidebar]="currentRole === 'cliente'"
+      [class.sidebar-collapsed]="sidebarCollapsed() && currentRole !== 'cliente'"
+    >
       <router-outlet></router-outlet>
     </main>
   </div>

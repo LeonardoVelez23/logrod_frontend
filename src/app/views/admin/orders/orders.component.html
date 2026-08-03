@@ -45,7 +45,7 @@
         <div 
           *ngFor="let pedido of getPedidosPorEstados(['solicitado', 'confirmado'])" 
           class="order-card"
-          (dblclick)="openDetail(pedido)"
+          (click)="openDetail(pedido)"
         >
           <div class="card-top">
             <span class="order-id">#{{ pedido.id }}</span>
@@ -58,7 +58,7 @@
           
           <div class="products-list">
             <p *ngFor="let det of pedido.detalles" class="product-item">
-              🍔 <span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
+              <i class="bi bi-tag-fill me-1 small"></i><span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
             </p>
           </div>
 
@@ -67,9 +67,10 @@
               <i class="bi bi-clock"></i> {{ getTiempoTranscurrido(pedido.createdAt) }}
             </div>
             
-            <button 
-              class="action-btn btn-start" 
-              (click)="iniciarPreparacion(pedido)"
+            <button
+              *ngIf="puedeGestionarEstado"
+              class="action-btn btn-start"
+              (click)="iniciarPreparacion(pedido); $event.stopPropagation()"
               title="Iniciar Preparación"
             >
               <i class="bi bi-play-fill"></i>
@@ -97,7 +98,7 @@
         <div 
           *ngFor="let pedido of getPedidosPorEstados(['en preparación'])" 
           class="order-card border-preparacion"
-          (dblclick)="openDetail(pedido)"
+          (click)="openDetail(pedido)"
         >
           <div class="card-top">
             <span class="order-id">#{{ pedido.id }}</span>
@@ -110,7 +111,7 @@
           
           <div class="products-list">
             <p *ngFor="let det of pedido.detalles" class="product-item">
-              🍔 <span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
+              <i class="bi bi-tag-fill me-1 small"></i><span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
             </p>
           </div>
 
@@ -124,7 +125,7 @@
               <div class="progress-bar-fill" [style.width.%]="getProgreso(pedido.createdAt)"></div>
             </div>
             <span class="elapsed-time-text">
-              ⌛ Preparando ({{ getMinutosTranscurridos(pedido.createdAt) }}m transcurridos)
+              <i class="bi bi-hourglass-split me-1"></i>Preparando ({{ getMinutosTranscurridos(pedido.createdAt) }}m transcurridos)
             </span>
           </div>
 
@@ -138,9 +139,10 @@
               </span>
             </div>
             
-            <button 
-              class="btn-mark-ready" 
-              (click)="marcarListo(pedido)"
+            <button
+              *ngIf="puedeGestionarEstado"
+              class="btn-mark-ready"
+              (click)="marcarListo(pedido); $event.stopPropagation()"
             >
               Listo
             </button>
@@ -167,7 +169,7 @@
         <div 
           *ngFor="let pedido of getPedidosPorEstados(['listo'])" 
           class="order-card border-listo"
-          (dblclick)="openDetail(pedido)"
+          (click)="openDetail(pedido)"
         >
           <div class="card-top">
             <span class="order-id">#{{ pedido.id }}</span>
@@ -183,7 +185,7 @@
           
           <div class="products-list">
             <p *ngFor="let det of pedido.detalles" class="product-item">
-              🍔 <span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
+              <i class="bi bi-tag-fill me-1 small"></i><span class="product-qty">{{ det.cantidad }}x</span> {{ det.producto?.nombre }}
             </p>
           </div>
 
@@ -197,9 +199,10 @@
               </span>
             </div>
             
-            <button 
-              class="btn-deliver" 
-              (click)="entregarPedido(pedido)"
+            <button
+              *ngIf="puedeGestionarEstado"
+              class="btn-deliver"
+              (click)="entregarPedido(pedido); $event.stopPropagation()"
             >
               Entregar <i class="bi bi-arrow-right-short"></i>
             </button>
@@ -377,33 +380,33 @@
         {{ isSavingAsignacion ? 'Guardando...' : 'Guardar Asignación' }}
       </button>
       
-      <button 
-        class="btn btn-danger" 
-        *ngIf="selectedPedido.estado !== 'entregado' && selectedPedido.estado !== 'cancelado'" 
+      <button
+        class="btn btn-danger"
+        *ngIf="puedeGestionarEstado && selectedPedido.estado !== 'entregado' && selectedPedido.estado !== 'cancelado'"
         (click)="solicitarCancelacion(selectedPedido)"
       >
         Cancelar Pedido
       </button>
 
-      <button 
-        class="btn btn-primary" 
-        *ngIf="selectedPedido.estado === 'solicitado' || selectedPedido.estado === 'confirmado'" 
+      <button
+        class="btn btn-primary"
+        *ngIf="puedeGestionarEstado && (selectedPedido.estado === 'solicitado' || selectedPedido.estado === 'confirmado')"
         (click)="iniciarPreparacion(selectedPedido)"
       >
         <i class="bi bi-play-fill"></i> Iniciar Preparación
       </button>
 
-      <button 
-        class="btn btn-primary" 
-        *ngIf="selectedPedido.estado === 'en preparación'" 
+      <button
+        class="btn btn-primary"
+        *ngIf="puedeGestionarEstado && selectedPedido.estado === 'en preparación'"
         (click)="marcarListo(selectedPedido)"
       >
         <i class="bi bi-check-circle-fill"></i> Marcar Listo
       </button>
 
-      <button 
-        class="btn btn-primary" 
-        *ngIf="selectedPedido.estado === 'listo'" 
+      <button
+        class="btn btn-primary"
+        *ngIf="puedeGestionarEstado && selectedPedido.estado === 'listo'"
         (click)="entregarPedido(selectedPedido)"
       >
         Entregar Pedido <i class="bi bi-arrow-right-short"></i>
@@ -414,7 +417,7 @@
   <!-- Modal de Registrar Nuevo Pedido -->
   <app-modal 
     [isOpen]="showCreateModal" 
-    title="📝 Registrar Nuevo Pedido" 
+    title="Registrar Nuevo Pedido" 
     size="lg"
     (onClose)="closeCreateModal()"
   >
@@ -433,31 +436,68 @@
         <div class="col-md-6">
           <label class="form-label font-semibold text-sm mb-1">Modalidad de Servicio</label>
           <select [(ngModel)]="newOrderModalidad" class="form-control">
-            <option value="presencial">🍽️ COMEDOR (Presencial)</option>
-            <option value="en línea">🛍️ PARA LLEVAR (En línea)</option>
+            <option value="presencial">COMEDOR (Presencial)</option>
+            <option value="en línea">PARA LLEVAR (En línea)</option>
           </select>
         </div>
       </div>
 
-      <!-- Selección y Adición de Productos -->
+      <!-- Selección y Adición de Productos: mini-vista tipo Catálogo -->
       <div class="info-section mb-4">
-        <h4 class="section-title">🍔 Seleccionar Productos</h4>
-        <div class="row g-2 align-items-end mb-3">
-          <div class="col-md-7">
-            <label class="form-label text-xs mb-1">Producto disponible</label>
-            <select [(ngModel)]="selectedProductId" class="form-control">
-              <option *ngIf="productosDisponibles.length === 0" [ngValue]="null">No hay productos disponibles con stock</option>
-              <option *ngFor="let p of productosDisponibles" [value]="p.id">
-                {{ p.nombre }} - ${{ p.precio | number:'1.2-2' }} (Stock: {{ p.cantidad_disponible }})
-              </option>
-            </select>
+        <h4 class="section-title"><i class="bi bi-bag-plus-fill me-1"></i> Seleccionar Productos</h4>
+
+        <input
+          type="text"
+          [(ngModel)]="newOrderProductSearch"
+          placeholder="Buscar producto..."
+          class="form-control mb-2"
+        />
+
+        <div class="mini-category-chips mb-3">
+          <button type="button" class="mini-chip" [class.active]="!newOrderCategoriaId" (click)="newOrderCategoriaId = ''">
+            Todas
+          </button>
+          <button
+            type="button"
+            class="mini-chip"
+            *ngFor="let cat of getCategoriasDisponibles()"
+            [class.active]="newOrderCategoriaId === cat.id.toString()"
+            (click)="newOrderCategoriaId = cat.id.toString()"
+          >
+            {{ cat.nombre }}
+          </button>
+        </div>
+
+        <div class="mini-product-grid mb-3">
+          <div
+            *ngFor="let p of getProductosDisponiblesFiltrados()"
+            class="mini-product-card"
+            [class.selected]="selectedProductId === p.id"
+            (click)="seleccionarProductoNuevoPedido(p)"
+          >
+            <img *ngIf="p.imagen_url" [src]="p.imagen_url" [alt]="p.nombre" class="mini-product-image" />
+            <div *ngIf="!p.imagen_url" class="mini-product-image mini-product-image-empty">
+              <i class="bi bi-image"></i>
+            </div>
+            <div class="mini-product-info">
+              <span class="mini-product-name">{{ p.nombre }}</span>
+              <span class="mini-product-price">${{ p.precio | number:'1.2-2' }}</span>
+              <span class="mini-product-stock">Stock: {{ p.cantidad_disponible }}</span>
+            </div>
           </div>
+
+          <div *ngIf="getProductosDisponiblesFiltrados().length === 0" class="mini-catalog-empty">
+            No hay productos disponibles en esta categoría.
+          </div>
+        </div>
+
+        <div class="row g-2 align-items-end mb-3">
           <div class="col-md-3">
             <label class="form-label text-xs mb-1">Cantidad</label>
             <input type="number" [(ngModel)]="selectedQuantity" min="1" max="50" class="form-control" />
           </div>
-          <div class="col-md-2">
-            <button class="btn btn-primary w-100" (click)="addItemToNewOrder()">
+          <div class="col-md-3">
+            <button class="btn btn-primary w-100" [disabled]="!selectedProductId" (click)="addItemToNewOrder()">
               + Agregar
             </button>
           </div>
@@ -483,7 +523,7 @@
                 <td class="text-end">${{ item.subtotal | number:'1.2-2' }}</td>
                 <td class="text-center">
                   <button class="btn-remove-item" (click)="removeItemFromNewOrder(i)" title="Eliminar ítem">
-                    🗑️
+                    <i class="bi bi-trash-fill text-danger"></i>
                   </button>
                 </td>
               </tr>
@@ -510,7 +550,7 @@
         [disabled]="isSubmittingOrder || newOrderItems.length === 0 || !newOrderClienteId"
         (click)="guardarNuevoPedido()"
       >
-        <span *ngIf="!isSubmittingOrder">💾 Registrar Pedido</span>
+        <span *ngIf="!isSubmittingOrder"><i class="bi bi-floppy-fill me-1"></i> Registrar Pedido</span>
         <span *ngIf="isSubmittingOrder">Guardando...</span>
       </button>
     </div>
@@ -519,7 +559,7 @@
   <!-- Modal de Pasarela de Cobro y Pago -->
   <app-modal 
     [isOpen]="showPaymentModal" 
-    title="💳 Registrar Pago y Entregar Pedido" 
+    title="Registrar Pago y Entregar Pedido" 
     size="md"
     (onClose)="closePaymentModal()"
   >
@@ -545,7 +585,7 @@
             (click)="paymentMethod = 'efectivo'"
             style="border-radius: var(--border-radius-sm); font-weight: 600;"
           >
-            💵 Efectivo
+            <i class="bi bi-cash-stack me-1"></i> Efectivo
           </button>
           <button 
             type="button" 
@@ -555,7 +595,7 @@
             (click)="paymentMethod = 'transferencia'"
             style="border-radius: var(--border-radius-sm); font-weight: 600;"
           >
-            🏦 Transferencia
+            <i class="bi bi-bank me-1"></i> Transferencia
           </button>
           <button 
             type="button" 
@@ -565,7 +605,7 @@
             (click)="paymentMethod = 'tarjeta'"
             style="border-radius: var(--border-radius-sm); font-weight: 600;"
           >
-            💳 Tarjeta
+            <i class="bi bi-credit-card-fill me-1"></i> Tarjeta
           </button>
         </div>
       </div>
@@ -606,7 +646,7 @@
         [disabled]="isProcessingPayment"
         style="background-color: var(--success); border-color: var(--success); font-weight: 600;"
       >
-        {{ isProcessingPayment ? 'Procesando...' : '💰 Registrar Pago y Entregar' }}
+        {{ isProcessingPayment ? 'Procesando...' : 'Registrar Pago y Entregar' }}
       </button>
     </div>
   </app-modal>
@@ -616,7 +656,7 @@
   <div class="cancel-confirm-card" (click)="$event.stopPropagation()">
     <!-- Icono de advertencia -->
     <div class="cancel-confirm-icon">
-      <span>⚠️</span>
+      <i class="bi bi-exclamation-triangle-fill text-warning fs-3"></i>
     </div>
     <!-- Título -->
     <h3 class="cancel-confirm-title">Cancelar Pedido #{{ pedidoPorCancelar?.id }}</h3>
@@ -631,7 +671,7 @@
         ← Volver
       </button>
       <button class="btn btn-danger" (click)="confirmarCancelacion()">
-        🗑️ Sí, cancelar pedido
+        <i class="bi bi-trash-fill me-1"></i> Sí, cancelar pedido
       </button>
     </div>
   </div>

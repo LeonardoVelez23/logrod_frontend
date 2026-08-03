@@ -18,13 +18,29 @@ export class MainLayoutComponent {
   private router = inject(Router);
 
   // WritableSignal estático heredado del maquetado para compatibilidad y enrutamiento
-  public static userRole: WritableSignal<'cliente' | 'empleado' | 'admin'> = signal('cliente');
-  
+  public static userRole: WritableSignal<'cliente' | 'empleado' | 'mesero' | 'cajero' | 'cocinero' | 'admin'> = signal('cliente');
+
+  // Estado de colapso del sidebar (solo iconos), persistido para que se recuerde entre sesiones
+  sidebarCollapsed: WritableSignal<boolean> = signal(false);
+
   constructor() {
     // Sincronizar el rol del servicio de autenticación con el rol del layout al iniciar
     const role = this.authService.getCurrentRole();
     if (role) {
       MainLayoutComponent.userRole.set(role);
+    }
+
+    if (typeof window !== 'undefined') {
+      this.sidebarCollapsed.set(localStorage.getItem('sidebarCollapsed') === 'true');
+    }
+  }
+
+  // Alternar el sidebar entre expandido (iconos + texto) y colapsado (solo iconos)
+  toggleSidebar() {
+    const nuevoValor = !this.sidebarCollapsed();
+    this.sidebarCollapsed.set(nuevoValor);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sidebarCollapsed', String(nuevoValor));
     }
   }
 
@@ -47,6 +63,18 @@ export class MainLayoutComponent {
   // Obtener el rol actual para la visualización del menú
   get currentRole() {
     return MainLayoutComponent.userRole();
+  }
+
+  // Etiqueta legible del rol para el encabezado del sidebar
+  get panelTitle(): string {
+    const etiquetas: Record<string, string> = {
+      admin: 'Admin',
+      empleado: 'Empleado',
+      mesero: 'Mesero',
+      cajero: 'Cajero',
+      cocinero: 'Cocinero'
+    };
+    return etiquetas[this.currentRole] || 'Empleado';
   }
 
 

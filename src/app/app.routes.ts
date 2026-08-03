@@ -20,25 +20,25 @@ export const routes: Routes = [
       { path: '', redirectTo: 'catalog', pathMatch: 'full' },
       { path: 'catalog', component: Catalog },
       { path: 'tracking', component: Tracking },
-      { 
-        path: 'admin/dashboard', 
-        component: Dashboard, 
-        canActivate: [roleGuard(['admin', 'empleado'])] 
+      {
+        path: 'admin/dashboard',
+        component: Dashboard,
+        canActivate: [roleGuard(['admin', 'empleado', 'cajero', 'cocinero'])]
       },
-      { 
-        path: 'admin/products', 
-        component: Products, 
-        canActivate: [roleGuard(['admin'])] 
+      {
+        path: 'admin/products',
+        component: Products,
+        canActivate: [roleGuard(['admin'])]
       },
       {
         path: 'admin/orders',
         component: Orders,
-        canActivate: [roleGuard(['admin', 'empleado'])]
+        canActivate: [roleGuard(['admin', 'empleado', 'cajero', 'cocinero', 'mesero'])]
       },
       {
         path: 'admin/historial',
         component: OrderHistoryComponent,
-        canActivate: [roleGuard(['admin', 'empleado'])]
+        canActivate: [roleGuard(['admin', 'empleado', 'cajero', 'cocinero'])]
       },
       {
         path: 'admin/usuarios',

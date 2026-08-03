@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { OrderService, Pedido } from '../../../services/order.service';
 import { EmployeeService, Empleado } from '../../../services/employee.service';
 import { ClientService, Cliente } from '../../../services/client.service';
-import { ProductService, Producto } from '../../../services/product.service';
+import { ProductService, Producto, Categoria } from '../../../services/product.service';
 import { AuthService } from '../../../services/auth.service';
 import { ModalComponent } from '../../../components/modal/modal.component';
 import { ToastService } from '../../../services/toast.service';
@@ -45,6 +45,8 @@ export class OrdersComponent implements OnInit {
   newOrderModalidad: 'presencial' | 'en línea' = 'presencial';
   selectedProductId: number | null = null;
   selectedQuantity: number = 1;
+  newOrderCategoriaId: string = '';
+  newOrderProductSearch: string = '';
   newOrderItems: Array<{
     producto_id: number;
     producto: Producto;
@@ -124,6 +126,11 @@ export class OrdersComponent implements OnInit {
     }
   }
 
+  // El mesero solo puede ver el tablero y crear pedidos, no mover el estado de un pedido
+  get puedeGestionarEstado(): boolean {
+    return this.authService.getCurrentRole() !== 'mesero';
+  }
+
   // Filtrar pedidos por estado y término de búsqueda
   getPedidosPorEstados(estados: string[]): Pedido[] {
     return this.pedidos.filter(pedido => {
@@ -148,8 +155,9 @@ export class OrdersComponent implements OnInit {
     };
 
     const currentUser = this.authService.currentUser();
-    // Si no tiene cocinero asignado y el usuario activo es empleado/admin, asignarlo a la preparación
-    if (!pedido.empleado_preparacion_id && currentUser && (currentUser.rol === 'empleado' || currentUser.rol === 'admin')) {
+    // Si no tiene cocinero asignado y el usuario activo es personal interno, asignarlo a la preparación
+    const rolesInternos = ['empleado', 'admin', 'cajero', 'cocinero'];
+    if (!pedido.empleado_preparacion_id && currentUser && rolesInternos.includes(currentUser.rol)) {
       payload.empleado_preparacion_id = currentUser.id;
     }
 
@@ -366,6 +374,8 @@ export class OrdersComponent implements OnInit {
     this.selectedQuantity = 1;
     this.newOrderItems = [];
     this.isSubmittingOrder = false;
+    this.newOrderCategoriaId = '';
+    this.newOrderProductSearch = '';
 
     // Cargar Lista de Clientes
     this.clientService.getClientes().subscribe({
@@ -402,6 +412,32 @@ export class OrdersComponent implements OnInit {
   closeCreateModal() {
     this.showCreateModal = false;
     this.cdr.detectChanges();
+  }
+
+  // Categorías presentes entre los productos disponibles (para los chips del selector, como en el Catálogo)
+  getCategoriasDisponibles(): Categoria[] {
+    const vistas = new Map<number, Categoria>();
+    for (const p of this.productosDisponibles) {
+      if (p.categoria && !vistas.has(p.categoria.id)) {
+        vistas.set(p.categoria.id, p.categoria);
+      }
+    }
+    return Array.from(vistas.values());
+  }
+
+  // Productos disponibles filtrados por categoría/búsqueda, para la mini-vista tipo Catálogo
+  getProductosDisponiblesFiltrados(): Producto[] {
+    return this.productosDisponibles.filter(p => {
+      const matchCategoria = !this.newOrderCategoriaId || p.categoria_id === parseInt(this.newOrderCategoriaId, 10);
+      const term = this.newOrderProductSearch.trim().toLowerCase();
+      const matchBusqueda = !term || p.nombre.toLowerCase().includes(term);
+      return matchCategoria && matchBusqueda;
+    });
+  }
+
+  // Seleccionar un producto desde la tarjeta (reemplaza al select plano)
+  seleccionarProductoNuevoPedido(producto: Producto) {
+    this.selectedProductId = producto.id ?? null;
   }
 
   addItemToNewOrder() {
@@ -477,7 +513,8 @@ export class OrdersComponent implements OnInit {
 
     const currentUser = this.authService.currentUser();
     let empleadoId: number | undefined = undefined;
-    if (currentUser && (currentUser.rol === 'empleado' || currentUser.rol === 'admin')) {
+    const rolesInternos = ['empleado', 'admin', 'cajero', 'cocinero', 'mesero'];
+    if (currentUser && rolesInternos.includes(currentUser.rol)) {
       empleadoId = currentUser.id;
     }
 

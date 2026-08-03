@@ -44,7 +44,7 @@
               (click)="selectDate(day.dateStr)"
             >
               <span class="day-number">{{ day.dayNum }}</span>
-              <span class="sales-indicator" *ngIf="day.hasSales" title="Hubo ventas en esta fecha">✓</span>
+              <i class="bi bi-check-lg sales-indicator" *ngIf="day.hasSales" title="Hubo ventas en esta fecha"></i>
             </div>
           </div>
         </div>
@@ -130,29 +130,29 @@
 
         <!-- Panel Inferior: Ingreso Consolidado del Día (Fijo abajo) -->
         <div class="card-footer bg-transparent border-0 pt-3 pb-4 px-4 mt-auto">
-          <h4 class="footer-title text-muted mb-3 font-weight-bold" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">💰 Ingreso Total de Caja</h4>
+          <h4 class="footer-title text-muted mb-3 font-weight-bold" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;"><i class="bi bi-cash-stack me-1"></i> Ingreso Total de Caja</h4>
           <div class="row g-3">
             <div class="col-md-3 col-sm-6">
               <div class="kpi-box cash-kpi text-center p-3 h-100 rounded">
-                <span class="kpi-label text-muted d-block small mb-1">💵 Efectivo</span>
+                <span class="kpi-label text-muted d-block small mb-1"><i class="bi bi-cash me-1"></i> Efectivo</span>
                 <h4 class="kpi-val text-success mb-0">${{ revenueByMethod.efectivo | number:'1.2-2' }}</h4>
               </div>
             </div>
             <div class="col-md-3 col-sm-6">
               <div class="kpi-box transfer-kpi text-center p-3 h-100 rounded">
-                <span class="kpi-label text-muted d-block small mb-1">🏦 Transferencias</span>
+                <span class="kpi-label text-muted d-block small mb-1"><i class="bi bi-bank me-1"></i> Transferencias</span>
                 <h4 class="kpi-val text-warning mb-0">${{ revenueByMethod.transferencia | number:'1.2-2' }}</h4>
               </div>
             </div>
             <div class="col-md-3 col-sm-6">
               <div class="kpi-box card-kpi text-center p-3 h-100 rounded">
-                <span class="kpi-label text-muted d-block small mb-1">💳 Tarjetas</span>
+                <span class="kpi-label text-muted d-block small mb-1"><i class="bi bi-credit-card me-1"></i> Tarjetas</span>
                 <h4 class="kpi-val text-primary mb-0">${{ revenueByMethod.tarjeta | number:'1.2-2' }}</h4>
               </div>
             </div>
             <div class="col-md-3 col-sm-6">
               <div class="kpi-box total-kpi text-center p-3 h-100 rounded bg-primary-subtle border border-primary-subtle">
-                <span class="kpi-label text-primary font-weight-bold d-block small mb-1">📈 Ventas Totales</span>
+                <span class="kpi-label text-primary font-weight-bold d-block small mb-1"><i class="bi bi-graph-up-arrow me-1"></i> Ventas Totales</span>
                 <h4 class="kpi-val text-primary font-weight-bold mb-0">${{ totalRevenueToday | number:'1.2-2' }}</h4>
               </div>
             </div>
