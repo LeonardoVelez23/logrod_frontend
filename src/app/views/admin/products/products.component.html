@@ -46,6 +46,7 @@
       <table class="products-table">
         <thead>
           <tr>
+            <th></th>
             <th>Código</th>
             <th>Nombre</th>
             <th>Categoría</th>
@@ -57,6 +58,12 @@
         </thead>
         <tbody>
           <tr *ngFor="let prod of getProductosFiltrados()" class="product-row">
+            <td class="thumb-col">
+              <img *ngIf="prod.imagen_url" [src]="prod.imagen_url" [alt]="prod.nombre" class="product-thumb" />
+              <div *ngIf="!prod.imagen_url" class="product-thumb product-thumb-empty">
+                <i class="bi bi-image"></i>
+              </div>
+            </td>
             <td class="code-col"><code>{{ prod.codigo }}</code></td>
             <td>
               <div class="product-info-cell">
@@ -101,7 +108,7 @@
           </tr>
 
           <tr *ngIf="getProductosFiltrados().length === 0">
-            <td colspan="7" class="text-center py-4 text-muted">
+            <td colspan="8" class="text-center py-4 text-muted">
               No se encontraron productos que coincidan con la búsqueda.
             </td>
           </tr>
@@ -202,13 +209,29 @@
         <!-- Descripción -->
         <div class="col-12 form-group">
           <label class="form-label">Descripción</label>
-          <textarea 
-            [(ngModel)]="productoForm.descripcion" 
-            name="descripcion" 
-            rows="3" 
-            placeholder="Ingresa una breve descripción de los ingredientes o del plato..." 
+          <textarea
+            [(ngModel)]="productoForm.descripcion"
+            name="descripcion"
+            rows="3"
+            placeholder="Ingresa una breve descripción de los ingredientes o del plato..."
             class="form-control"
           ></textarea>
+        </div>
+
+        <!-- Imagen del Producto -->
+        <div class="col-12 form-group">
+          <label class="form-label">Foto del Producto</label>
+          <div class="image-upload-row">
+            <img *ngIf="imagePreviewUrl" [src]="imagePreviewUrl" alt="Vista previa" class="image-preview" />
+            <div *ngIf="!imagePreviewUrl" class="image-preview image-preview-empty">
+              <i class="bi bi-image"></i>
+            </div>
+            <div class="image-upload-controls">
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" (change)="onImageSelected($event)" class="form-control" />
+              <small class="form-hint" *ngIf="uploadingImage">Subiendo imagen...</small>
+              <small class="form-hint" *ngIf="!uploadingImage">JPG, PNG, WEBP o GIF. Máximo 5 MB.</small>
+            </div>
+          </div>
         </div>
       </div>
     </form>

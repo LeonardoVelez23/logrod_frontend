@@ -18,6 +18,7 @@ export interface Producto {
   estado: 'disponible' | 'no disponible';
   categoria_id: number;
   categoria?: Categoria;
+  imagen_url?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -52,6 +53,15 @@ export class ProductService {
 
   deleteProducto(id: number): Observable<{ success: boolean; message: string }> {
     return this.http.delete<{ success: boolean; message: string }>(`${API_BASE_URL}/productos/${id}`);
+  }
+
+  uploadImagen(id: number, file: File): Observable<{ success: boolean; message: string; data: Producto }> {
+    const formData = new FormData();
+    formData.append('imagen', file);
+    return this.http.post<{ success: boolean; message: string; data: Producto }>(
+      `${API_BASE_URL}/productos/${id}/imagen`,
+      formData
+    );
   }
 
   getCategorias(): Observable<{ success: boolean; data: Categoria[] }> {

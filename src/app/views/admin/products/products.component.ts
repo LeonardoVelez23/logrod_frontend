@@ -36,6 +36,11 @@ export class ProductsComponent implements OnInit {
   showDeleteModal: boolean = false;
   productToDelete: Producto | null = null;
 
+  // Imagen del producto (se sube aparte, después de crear/guardar los datos del producto)
+  selectedImageFile: File | null = null;
+  imagePreviewUrl: string | null = null;
+  uploadingImage: boolean = false;
+
   productoForm = {
     codigo: '',
     nombre: '',
@@ -111,6 +116,8 @@ export class ProductsComponent implements OnInit {
       estado: 'disponible',
       categoria_id: this.categorias[0]?.id || 0
     };
+    this.selectedImageFile = null;
+    this.imagePreviewUrl = null;
     this.showModal = true;
     this.cdr.detectChanges();
   }
@@ -128,6 +135,8 @@ export class ProductsComponent implements OnInit {
       estado: producto.estado,
       categoria_id: producto.categoria_id
     };
+    this.selectedImageFile = null;
+    this.imagePreviewUrl = producto.imagen_url || null;
     this.showModal = true;
     this.cdr.detectChanges();
   }
@@ -136,6 +145,49 @@ export class ProductsComponent implements OnInit {
   closeModal() {
     this.showModal = false;
     this.cdr.detectChanges();
+  }
+
+  // Validar y previsualizar la imagen seleccionada (aún no se sube al servidor)
+  onImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!tiposPermitidos.includes(file.type)) {
+      this.toastService.showWarning('Formato de imagen no soportado. Usa JPG, PNG, WEBP o GIF.');
+      input.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.toastService.showWarning('La imagen no puede superar los 5 MB.');
+      input.value = '';
+      return;
+    }
+
+    this.selectedImageFile = file;
+    this.imagePreviewUrl = URL.createObjectURL(file);
+  }
+
+  // Subir la imagen seleccionada para un producto ya creado/guardado
+  private subirImagenSiCorresponde(productoId: number) {
+    if (!this.selectedImageFile) return;
+
+    this.uploadingImage = true;
+    this.productService.uploadImagen(productoId, this.selectedImageFile).subscribe({
+      next: (response) => {
+        this.uploadingImage = false;
+        if (response.success) {
+          this.loadProductos();
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.uploadingImage = false;
+        this.cdr.detectChanges();
+        this.toastService.showError('El producto se guardó, pero la imagen no se pudo subir: ' + (err.error?.message || err.message));
+      }
+    });
   }
 
   // Procesar el envío del formulario (Creación o Edición)
@@ -170,9 +222,11 @@ export class ProductsComponent implements OnInit {
 
     if (this.isEditMode && this.currentProductoId !== undefined) {
       // Actualizar producto existente
-      this.productService.updateProducto(this.currentProductoId, payload).subscribe({
+      const productoId = this.currentProductoId;
+      this.productService.updateProducto(productoId, payload).subscribe({
         next: (response) => {
           if (response.success) {
+            this.subirImagenSiCorresponde(productoId);
             this.loadProductos();
             this.closeModal();
             this.toastService.showSuccess('Producto actualizado correctamente.');
@@ -187,6 +241,9 @@ export class ProductsComponent implements OnInit {
       this.productService.createProducto(payload).subscribe({
         next: (response) => {
           if (response.success) {
+            if (response.data.id !== undefined) {
+              this.subirImagenSiCorresponde(response.data.id);
+            }
             this.loadProductos();
             this.closeModal();
             this.toastService.showSuccess('Producto creado correctamente.');
