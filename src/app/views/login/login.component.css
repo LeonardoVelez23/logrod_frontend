@@ -221,3 +221,64 @@
     transform: translateY(0);
   }
 }
+
+/* OTP Input */
+.otp-input {
+  font-family: 'Courier New', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 10px;
+  text-align: center;
+  padding-left: 48px !important;
+}
+
+/* Step Indicator (branding panel) */
+.step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+.step-dot.active {
+  background: #e11d48;
+  border-color: #e11d48;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(225,29,72,0.4);
+}
+.step-dot.done {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  transition: background 0.3s ease;
+}
+.step-line.active {
+  background: #e11d48;
+}
+
+/* Back button / inline link */
+.btn-back-step:hover {
+  color: #131b2e !important;
+  cursor: pointer;
+}
+.btn-link-inline:hover {
+  text-decoration: underline;
+}
+.btn-link-inline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
