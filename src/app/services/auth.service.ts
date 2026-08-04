@@ -51,6 +51,16 @@ export class AuthService {
     return this.http.post<any>(`${API_BASE_URL}/clientes`, clientData);
   }
 
+  // Solicitar enlace de recuperación de contraseña por correo
+  forgotPassword(email: string): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(`${API_BASE_URL}/auth/forgot-password`, { email });
+  }
+
+  // Restablecer contraseña con el OTP recibido por correo
+  resetPassword(email: string, otp: string, newPassword: string): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(`${API_BASE_URL}/auth/reset-password`, { email, otp, newPassword });
+  }
+
   // Limpiar credenciales y cerrar sesión
   logout() {
     if (typeof window !== 'undefined') {

@@ -1,6 +1,6 @@
 import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MainLayout } from '../main-layout/main-layout.component';
 import { AuthService } from '../../services/auth.service';
@@ -9,7 +9,7 @@ import { ToastService } from '../../services/toast.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
@@ -87,9 +87,56 @@ export class LoginComponent {
     });
   }
 
+  // Validar requisitos de contraseña (mínimo 8 caracteres, 1 mayúscula, 1 número y 1 carácter especial)
+  validatePassword(password: string): { isValid: boolean; message?: string } {
+    if (password.length < 8) {
+      return { isValid: false, message: 'La contraseña debe tener al menos 8 caracteres.' };
+    }
+    if (!/[A-Z]/.test(password)) {
+      return { isValid: false, message: 'La contraseña debe incluir al menos una letra mayúscula.' };
+    }
+    if (!/[0-9]/.test(password)) {
+      return { isValid: false, message: 'La contraseña debe incluir al menos un número.' };
+    }
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      return { isValid: false, message: 'La contraseña debe incluir al menos un carácter especial (ej: @, #, $, !, %).' };
+    }
+    return { isValid: true };
+  }
+
+  // Métodos de comprobación en tiempo real para el checklist interactivo de registro
+  pwdHasMinLength(): boolean {
+    return (this.registerData.contrasenia || '').length >= 8;
+  }
+
+  pwdHasUppercase(): boolean {
+    return /[A-Z]/.test(this.registerData.contrasenia || '');
+  }
+
+  pwdHasNumber(): boolean {
+    return /[0-9]/.test(this.registerData.contrasenia || '');
+  }
+
+  pwdHasSpecialChar(): boolean {
+    return /[^A-Za-z0-9]/.test(this.registerData.contrasenia || '');
+  }
+
+  pwdMatch(): boolean {
+    const pwd = this.registerData.contrasenia || '';
+    const confirm = this.registerData.confirmarContrasenia || '';
+    return pwd.length > 0 && confirm.length > 0 && pwd === confirm;
+  }
+
   // Enviar formulario de registro de cliente al backend
   onRegisterSubmit() {
     this.errorMessage.set(null);
+
+    // Validar fortaleza de la contraseña
+    const passwordCheck = this.validatePassword(this.registerData.contrasenia);
+    if (!passwordCheck.isValid) {
+      this.errorMessage.set(passwordCheck.message!);
+      return;
+    }
 
     // Validar que las contraseñas coincidan antes de enviar
     if (this.registerData.contrasenia !== this.registerData.confirmarContrasenia) {

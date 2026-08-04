@@ -8,10 +8,14 @@ import { Products } from './views/admin/products/products.component';
 import { Orders } from './views/admin/orders/orders.component';
 import { Users } from './views/admin/users/users.component';
 import { OrderHistoryComponent } from './views/admin/order-history/order-history.component';
+import { ForgotPassword } from './views/forgot-password/forgot-password.component';
+import { ResetPassword } from './views/reset-password/reset-password.component';
 import { authGuard, roleGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
+  { path: 'forgot-password', component: ForgotPassword },
+  { path: 'reset-password', component: ResetPassword },
   {
     path: '',
     component: MainLayout,
