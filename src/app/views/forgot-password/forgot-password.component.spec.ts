@@ -86,6 +86,47 @@ describe('ForgotPasswordComponent', () => {
     expect(component.errorMessage()).toBe('Correo no registrado');
   });
 
+  it('onSendOtp debe usar un mensaje de error por defecto cuando el backend no envía uno', () => {
+    component.email.set('test@domain.com');
+    authServiceSpy.forgotPassword.mockReturnValue(throwError(() => ({ error: {} })));
+
+    component.onSendOtp();
+
+    expect(component.errorMessage()).toBe('Error al enviar el código. Intenta de nuevo.');
+  });
+
+  it('onSendOtp no debe llamar al backend si el correo está vacío', () => {
+    component.email.set('   ');
+
+    component.onSendOtp();
+
+    expect(authServiceSpy.forgotPassword).not.toHaveBeenCalled();
+    expect(component.isLoading()).toBe(false);
+  });
+
+  it('onResendOtp debe reenviar el código y limpiar el OTP previo', () => {
+    component.otp.set('123456');
+    component.email.set('test@domain.com');
+    authServiceSpy.forgotPassword.mockReturnValue(of({ success: true }));
+
+    component.onResendOtp();
+
+    expect(authServiceSpy.forgotPassword).toHaveBeenCalledWith('test@domain.com');
+    expect(component.otp()).toBe('');
+    expect(component.isLoading()).toBe(false);
+    expect(toastServiceSpy.showSuccess).toHaveBeenCalledWith('Nuevo código enviado. Revisa tu correo.');
+  });
+
+  it('onResendOtp debe mostrar un mensaje neutro incluso si la petición falla (no revela si el correo existe)', () => {
+    component.email.set('test@domain.com');
+    authServiceSpy.forgotPassword.mockReturnValue(throwError(() => ({ error: { message: 'Correo no existe' } })));
+
+    component.onResendOtp();
+
+    expect(component.isLoading()).toBe(false);
+    expect(toastServiceSpy.showSuccess).toHaveBeenCalledWith('Código reenviado.');
+  });
+
   it('onResetPassword debe validar longitud del OTP (6 dígitos)', () => {
     component.email.set('test@domain.com');
     component.otp.set('123'); // Solo 3 dígitos
@@ -121,6 +162,32 @@ describe('ForgotPasswordComponent', () => {
     expect(authServiceSpy.resetPassword).toHaveBeenCalledWith('test@domain.com', '123456', 'Pass123!');
     expect(component.step()).toBe(3);
     expect(toastServiceSpy.showSuccess).toHaveBeenCalledWith('¡Contraseña restablecida con éxito!');
+  });
+
+  it('onResetPassword debe mostrar el mensaje de error del backend cuando el código es incorrecto', () => {
+    component.step.set(2);
+    component.email.set('test@domain.com');
+    component.otp.set('123456');
+    component.newPassword.set('Pass123!');
+    component.confirmPassword.set('Pass123!');
+    authServiceSpy.resetPassword.mockReturnValue(throwError(() => ({ error: { message: 'Código expirado' } })));
+
+    component.onResetPassword();
+
+    expect(component.step()).toBe(2);
+    expect(component.errorMessage()).toBe('Código expirado');
+  });
+
+  it('onResetPassword debe usar un mensaje de error por defecto cuando el backend no envía uno', () => {
+    component.email.set('test@domain.com');
+    component.otp.set('123456');
+    component.newPassword.set('Pass123!');
+    component.confirmPassword.set('Pass123!');
+    authServiceSpy.resetPassword.mockReturnValue(throwError(() => ({ error: {} })));
+
+    component.onResetPassword();
+
+    expect(component.errorMessage()).toBe('Código incorrecto o expirado. Solicita uno nuevo.');
   });
 
   it('goBackToStep1 debe reiniciar los campos y volver al Paso 1', () => {

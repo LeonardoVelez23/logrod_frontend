@@ -3,7 +3,7 @@ import { of, throwError } from 'rxjs';
 import { describe, beforeEach, afterEach, it, expect, vi } from 'vitest';
 import { OrdersComponent } from './orders.component';
 import { OrderService, Pedido } from '../../../services/order.service';
-import { EmployeeService } from '../../../services/employee.service';
+import { EmployeeService, Empleado } from '../../../services/employee.service';
 import { ClientService } from '../../../services/client.service';
 import { ProductService, Producto } from '../../../services/product.service';
 import { AuthService } from '../../../services/auth.service';
@@ -228,5 +228,269 @@ describe('OrdersComponent (Admin)', () => {
 
     component.cambiarFecha('2026-08-01');
     expect(component.selectedFecha).toBe('2026-08-01');
+  });
+
+  it('getters de permisos deben reflejar las restricciones por rol', () => {
+    authServiceSpy.getCurrentRole.mockReturnValue('mesero');
+    expect(component.puedeGestionarEstado).toBe(false);
+    expect(component.puedeEntregar).toBe(false);
+    expect(component.puedeCrearPedidos).toBe(true);
+    expect(component.puedeCancelar).toBe(true);
+    expect(component.esCocinero).toBe(false);
+
+    authServiceSpy.getCurrentRole.mockReturnValue('cocinero');
+    expect(component.puedeGestionarEstado).toBe(true);
+    expect(component.puedeEntregar).toBe(false);
+    expect(component.puedeCrearPedidos).toBe(false);
+    expect(component.puedeCancelar).toBe(false);
+    expect(component.esCocinero).toBe(true);
+
+    authServiceSpy.getCurrentRole.mockReturnValue('admin');
+    expect(component.puedeGestionarEstado).toBe(true);
+    expect(component.puedeEntregar).toBe(true);
+    expect(component.puedeCrearPedidos).toBe(true);
+    expect(component.puedeCancelar).toBe(true);
+    expect(component.esCocinero).toBe(false);
+  });
+
+  it('loadPedidos debe manejar errores y detener el estado de carga', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    orderServiceSpy.getPedidos.mockReturnValue(throwError(() => new Error('fallo')));
+
+    component.loadPedidos();
+
+    expect(component.isLoadingPedidos).toBe(false);
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('loadEmpleados no debe cargar empleados si el rol no es admin', () => {
+    authServiceSpy.getCurrentRole.mockReturnValue('mesero');
+    employeeServiceSpy.getEmpleados.mockClear();
+
+    component.loadEmpleados();
+
+    expect(employeeServiceSpy.getEmpleados).not.toHaveBeenCalled();
+  });
+
+  it('loadEmpleados debe manejar errores al cargar empleados', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    authServiceSpy.getCurrentRole.mockReturnValue('admin');
+    employeeServiceSpy.getEmpleados.mockReturnValue(throwError(() => new Error('fallo')));
+
+    component.loadEmpleados();
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('openDetail debe abrir el modal con datos parciales y refrescarlos desde el servidor', () => {
+    const pedidoCompleto = { ...mockPedidos[0], empleado_id: 10, empleado_preparacion_id: 11 };
+    orderServiceSpy.getPedidoById.mockReturnValue(of({ success: true, data: pedidoCompleto }));
+
+    component.openDetail(mockPedidos[0]);
+
+    expect(component.showDetailModal).toBe(true);
+    expect(orderServiceSpy.getPedidoById).toHaveBeenCalledWith(1);
+    expect(component.selectedPedido).toEqual(pedidoCompleto);
+    expect(component.tempEmpleadoId).toBe('10');
+    expect(component.tempEmpleadoPreparacionId).toBe('11');
+
+    component.closeDetail();
+    expect(component.selectedPedido).toBeNull();
+    expect(component.showDetailModal).toBe(false);
+  });
+
+  it('iniciarPreparacion debe notificar error si falla la actualización', () => {
+    orderServiceSpy.updatePedido.mockReturnValue(throwError(() => ({ error: { message: 'fallo' } })));
+
+    component.iniciarPreparacion(mockPedidos[0]);
+
+    expect(toastServiceSpy.showError).toHaveBeenCalledWith('Error al iniciar preparación: fallo');
+  });
+
+  it('marcarListo debe notificar error si falla la actualización', () => {
+    orderServiceSpy.updatePedido.mockReturnValue(throwError(() => ({ error: { message: 'fallo' } })));
+
+    component.marcarListo(mockPedidos[0]);
+
+    expect(toastServiceSpy.showError).toHaveBeenCalledWith('Error al marcar como listo: fallo');
+  });
+
+  it('confirmarCancelacion debe notificar error si falla la actualización', () => {
+    component.solicitarCancelacion(mockPedidos[0]);
+    orderServiceSpy.updatePedido.mockReturnValue(throwError(() => ({ error: { message: 'fallo' } })));
+
+    component.confirmarCancelacion();
+
+    expect(toastServiceSpy.showError).toHaveBeenCalledWith('Error al cancelar pedido: fallo');
+    expect(component.isCancellingOrder).toBe(false);
+  });
+
+  it('entregarPedido debe notificar error cuando la verificación de pago falla con un error distinto a 404', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    pagoServiceSpy.getPagoByPedido.mockReturnValue(throwError(() => ({ status: 500 })));
+
+    component.entregarPedido(mockPedidos[0]);
+
+    expect(toastServiceSpy.showError).toHaveBeenCalledWith('Error al verificar el estado de pago del pedido.');
+    expect(component.showPaymentModal).toBe(false);
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('ejecutarEntregaDirecta debe marcar el pedido como entregado y cerrar el detalle', () => {
+    component.selectedPedido = mockPedidos[0];
+    orderServiceSpy.updatePedido.mockReturnValue(of({ success: true }));
+
+    component.ejecutarEntregaDirecta(mockPedidos[0]);
+
+    expect(orderServiceSpy.updatePedido).toHaveBeenCalledWith(1, { estado: 'entregado' });
+    expect(component.selectedPedido).toBeNull();
+    expect(toastServiceSpy.showSuccess).toHaveBeenCalledWith('Pedido entregado correctamente (Pago ya aprobado).');
+  });
+
+  it('ejecutarEntregaDirecta debe notificar error si falla la actualización', () => {
+    orderServiceSpy.updatePedido.mockReturnValue(throwError(() => ({ error: { message: 'fallo' } })));
+
+    component.ejecutarEntregaDirecta(mockPedidos[0]);
+
+    expect(toastServiceSpy.showError).toHaveBeenCalledWith('Error al entregar pedido: fallo');
+  });
+
+  it('closePaymentModal debe cerrar la pasarela y limpiar el pedido por pagar', () => {
+    component.abrirModalPago(mockPedidos[0]);
+
+    component.closePaymentModal();
+
+    expect(component.showPaymentModal).toBe(false);
+    expect(component.pedidoPorPagar).toBeNull();
+  });
+
+  it('procesarPagoYEntregar debe notificar error si falla el registro del pago', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    component.abrirModalPago(mockPedidos[0]);
+    component.paymentMethod = 'efectivo';
+    pagoServiceSpy.createPago.mockReturnValue(throwError(() => ({ error: { message: 'fallo pago' } })));
+
+    component.procesarPagoYEntregar();
+
+    expect(toastServiceSpy.showError).toHaveBeenCalledWith('Error al procesar pago: fallo pago');
+    expect(component.isProcessingPayment).toBe(false);
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('procesarPagoYEntregar debe notificar error si el pago se registra pero falla la actualización del pedido', () => {
+    component.abrirModalPago(mockPedidos[0]);
+    component.paymentMethod = 'efectivo';
+    pagoServiceSpy.createPago.mockReturnValue(of({ success: true }));
+    orderServiceSpy.updatePedido.mockReturnValue(throwError(() => ({ error: { message: 'fallo actualizar' } })));
+
+    component.procesarPagoYEntregar();
+
+    expect(toastServiceSpy.showError).toHaveBeenCalledWith('Pago registrado, pero falló al actualizar el pedido: fallo actualizar');
+    expect(component.isProcessingPayment).toBe(false);
+  });
+
+  it('guardarAsignacion debe notificar error si falla la actualización', () => {
+    component.selectedPedido = mockPedidos[0];
+    orderServiceSpy.updatePedido.mockReturnValue(throwError(() => ({ error: { message: 'fallo' } })));
+
+    component.guardarAsignacion();
+
+    expect(toastServiceSpy.showError).toHaveBeenCalledWith('Error al guardar asignación: fallo');
+    expect(component.isSavingAsignacion).toBe(false);
+  });
+
+  it('guardarNuevoPedido debe notificar error si falla la creación del pedido', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    component.newOrderClienteId = 1;
+    component.newOrderItems = [{ producto_id: 101, producto: mockProducto, cantidad: 1, precio_unitario: 2.0, subtotal: 2.0 }];
+    orderServiceSpy.createPedido.mockReturnValue(throwError(() => ({ error: { message: 'fallo' } })));
+
+    component.guardarNuevoPedido();
+
+    expect(toastServiceSpy.showError).toHaveBeenCalledWith('Error al registrar el pedido: fallo');
+    expect(component.isSubmittingOrder).toBe(false);
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('addItemToNewOrder debe validar producto seleccionado, cantidad mínima, producto inválido y stock disponible', () => {
+    component.openCreateModal();
+
+    component.selectedProductId = null;
+    component.addItemToNewOrder();
+    expect(toastServiceSpy.showWarning).toHaveBeenCalledWith('Seleccione un producto.');
+
+    component.selectedProductId = 101;
+    component.selectedQuantity = 0;
+    component.addItemToNewOrder();
+    expect(toastServiceSpy.showWarning).toHaveBeenCalledWith('La cantidad debe ser al menos 1.');
+
+    component.selectedProductId = 999;
+    component.selectedQuantity = 1;
+    component.addItemToNewOrder();
+    expect(toastServiceSpy.showError).toHaveBeenCalledWith('Producto no válido.');
+
+    component.selectedProductId = 101;
+    component.selectedQuantity = 51;
+    component.addItemToNewOrder();
+    expect(toastServiceSpy.showWarning).toHaveBeenCalledWith('La cantidad excede el stock disponible (50).');
+
+    component.selectedQuantity = 40;
+    component.addItemToNewOrder();
+    expect(component.newOrderItems.length).toBe(1);
+
+    component.selectedQuantity = 20;
+    component.addItemToNewOrder();
+    expect(toastServiceSpy.showWarning).toHaveBeenCalledWith('La cantidad total en el pedido (60) excede el stock disponible (50).');
+    expect(component.newOrderItems[0].cantidad).toBe(40);
+  });
+
+  it('getCategoriasDisponibles y getProductosDisponiblesFiltrados deben filtrar por categoría y por búsqueda', () => {
+    const mockProducto2: Producto = { id: 102, codigo: 'P02', nombre: 'Té', precio: 1.5, cantidad_disponible: 30, estado: 'disponible', categoria_id: 2, categoria: { id: 2, nombre: 'Infusiones' } };
+    productServiceSpy.getProductos.mockReturnValue(of({ success: true, data: [mockProducto, mockProducto2] }));
+
+    component.openCreateModal();
+
+    expect(component.getCategoriasDisponibles().length).toBe(2);
+    expect(component.getProductosDisponiblesFiltrados().length).toBe(2);
+
+    component.newOrderCategoriaId = '2';
+    expect(component.getProductosDisponiblesFiltrados()).toEqual([mockProducto2]);
+
+    component.newOrderCategoriaId = '';
+    component.newOrderProductSearch = 'caf';
+    expect(component.getProductosDisponiblesFiltrados()).toEqual([mockProducto]);
+  });
+
+  it('getInitials sin nombres ni apellidos debe devolver "E" por defecto', () => {
+    expect(component.getInitials()).toBe('E');
+  });
+
+  it('getTiempoTranscurrido debe mostrar horas cuando pasa más de una hora', () => {
+    const fecha = new Date(Date.now() - 90 * 60000).toISOString();
+    expect(component.getTiempoTranscurrido(fecha)).toBe('Hace 1 h');
+  });
+
+  it('getProgreso no debe superar el 100%', () => {
+    const fecha = new Date(Date.now() - 40 * 60000).toISOString();
+    expect(component.getProgreso(fecha)).toBe(100);
+  });
+
+  it('getCocineros y getMeserosYCajeros deben usar el listado completo como fallback si no hay coincidencias por cargo', () => {
+    const empleadoSinCargoConocido: Empleado = { id: 1, identificacion: '001', nombres: 'Ana', apellidos: 'Ruiz', correo_electronico: 'ana@test.com', cargo: 'Gerente' };
+    component.empleados = [empleadoSinCargoConocido];
+
+    expect(component.getCocineros()).toEqual(component.empleados);
+    expect(component.getMeserosYCajeros()).toEqual(component.empleados);
+  });
+
+  it('ngOnDestroy debe limpiar el temporizador de actualización', () => {
+    const clearIntervalSpy = vi.spyOn(window, 'clearInterval');
+
+    component.ngOnDestroy();
+
+    expect(clearIntervalSpy).toHaveBeenCalled();
+    clearIntervalSpy.mockRestore();
   });
 });

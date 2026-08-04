@@ -75,4 +75,28 @@ describe('MainLayoutComponent', () => {
     expect(authServiceSpy.logout).toHaveBeenCalled();
     expect(navigateSpy).toHaveBeenCalledWith(['/login']);
   });
+
+  it('userInitials debe retornar "U" si el usuario no tiene nombres ni apellidos', () => {
+    authServiceSpy.currentUser.mockReturnValue({ email: 'sinnombre@test.com' });
+    expect(component.userInitials).toBe('U');
+  });
+
+  it('no debe actualizar el rol estático si AuthService no retorna un rol actual', async () => {
+    MainLayoutComponent.userRole.set('cajero');
+    authServiceSpy.getCurrentRole.mockReturnValue(null);
+
+    const newFixture = TestBed.createComponent(MainLayoutComponent);
+    newFixture.detectChanges();
+
+    expect(MainLayoutComponent.userRole()).toBe('cajero');
+  });
+
+  it('debe restaurar el estado colapsado del sidebar desde localStorage al inicializar', () => {
+    localStorage.setItem('sidebarCollapsed', 'true');
+
+    const newFixture = TestBed.createComponent(MainLayoutComponent);
+    newFixture.detectChanges();
+
+    expect(newFixture.componentInstance.sidebarCollapsed()).toBe(true);
+  });
 });

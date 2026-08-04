@@ -3,6 +3,7 @@ import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { describe, beforeEach, it, expect, vi } from 'vitest';
 import { LoginComponent } from './login.component';
+import { MainLayout } from '../main-layout/main-layout.component';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 
@@ -55,7 +56,7 @@ describe('LoginComponent', () => {
     expect(component.showPassword()).toBe(true);
   });
 
-  it('onLoginSubmit debe redirigir a /catalog si el rol es cliente', () => {
+  it('onLoginSubmit debe redirigir a /catalog si el rol es cliente y actualizar el rol global', () => {
     const navigateSpy = vi.spyOn(router, 'navigate');
     authServiceSpy.login.mockReturnValue(of({ success: true, user: { rol: 'cliente' } }));
 
@@ -64,6 +65,7 @@ describe('LoginComponent', () => {
 
     expect(authServiceSpy.login).toHaveBeenCalledWith({ email: 'client@test.com', password: '123' });
     expect(navigateSpy).toHaveBeenCalledWith(['/catalog']);
+    expect(MainLayout.userRole()).toBe('cliente');
   });
 
   it('onLoginSubmit debe redirigir a /admin/orders si el rol es mesero o cocinero', () => {
@@ -89,6 +91,21 @@ describe('LoginComponent', () => {
     expect(component.errorMessage()).toBe('Credenciales inválidas');
   });
 
+  it('onLoginSubmit debe usar un mensaje por defecto cuando el error no trae mensaje', () => {
+    authServiceSpy.login.mockReturnValue(throwError(() => ({ error: {} })));
+
+    component.onLoginSubmit();
+    expect(component.errorMessage()).toBe('Error al iniciar sesión. Verifique sus credenciales.');
+  });
+
+  it('onLoginSubmit no debe navegar si la respuesta indica success: false', () => {
+    const navigateSpy = vi.spyOn(router, 'navigate');
+    authServiceSpy.login.mockReturnValue(of({ success: false, user: null }));
+
+    component.onLoginSubmit();
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
   it('validatePassword debe verificar longitud, mayúsculas, números y caracteres especiales', () => {
     expect(component.validatePassword('short').isValid).toBe(false);
     expect(component.validatePassword('alllowercase1!').isValid).toBe(false);
@@ -108,12 +125,52 @@ describe('LoginComponent', () => {
     expect(component.pwdMatch()).toBe(true);
   });
 
+  it('pwdMatch debe ser falso si alguna de las contraseñas está vacía', () => {
+    component.registerData.contrasenia = '';
+    component.registerData.confirmarContrasenia = '';
+    expect(component.pwdMatch()).toBe(false);
+
+    component.registerData.contrasenia = 'Valid123!';
+    component.registerData.confirmarContrasenia = '';
+    expect(component.pwdMatch()).toBe(false);
+  });
+
   it('onRegisterSubmit debe fallar si las contraseñas no coinciden', () => {
     component.registerData.contrasenia = 'Valid123!';
     component.registerData.confirmarContrasenia = 'Different123!';
 
     component.onRegisterSubmit();
     expect(component.errorMessage()).toBe('Las contraseñas no coinciden.');
+  });
+
+  it('onRegisterSubmit debe rechazar contraseñas débiles sin llamar al backend', () => {
+    component.registerData.contrasenia = 'weak';
+    component.registerData.confirmarContrasenia = 'weak';
+
+    component.onRegisterSubmit();
+
+    expect(component.errorMessage()).toBe('La contraseña debe tener al menos 8 caracteres.');
+    expect(authServiceSpy.register).not.toHaveBeenCalled();
+  });
+
+  it('onRegisterSubmit debe capturar errores del backend y setear errorMessage', () => {
+    component.registerData.contrasenia = 'Valid123!';
+    component.registerData.confirmarContrasenia = 'Valid123!';
+    authServiceSpy.register.mockReturnValue(throwError(() => ({ error: { message: 'Correo ya registrado' } })));
+
+    component.onRegisterSubmit();
+
+    expect(component.errorMessage()).toBe('Correo ya registrado');
+  });
+
+  it('onRegisterSubmit debe usar un mensaje por defecto cuando el error no trae mensaje', () => {
+    component.registerData.contrasenia = 'Valid123!';
+    component.registerData.confirmarContrasenia = 'Valid123!';
+    authServiceSpy.register.mockReturnValue(throwError(() => ({ error: {} })));
+
+    component.onRegisterSubmit();
+
+    expect(component.errorMessage()).toBe('Error al registrar la cuenta. Intente nuevamente.');
   });
 
   it('onRegisterSubmit debe enviar registro y cambiar a modo login al tener éxito', () => {

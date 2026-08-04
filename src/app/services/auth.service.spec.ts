@@ -71,6 +71,21 @@ describe('AuthService', () => {
     expect(service.currentUser()).toEqual(mockResponse.user);
   });
 
+  it('login() no debe guardar credenciales si la respuesta indica success: false', () => {
+    const mockResponse = { success: false, message: 'Credenciales inválidas' };
+
+    service.login({ email: 'user@test.com', password: 'wrong' }).subscribe(res => {
+      expect(res).toEqual(mockResponse);
+    });
+
+    const req = httpMock.expectOne(`${API_BASE_URL}/auth/login`);
+    req.flush(mockResponse);
+
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('user')).toBeNull();
+    expect(service.currentUser()).toBeNull();
+  });
+
   it('register() debe realizar petición POST a /clientes', () => {
     const clientData = { nombre: 'Juan', email: 'juan@test.com' };
     const mockResponse = { success: true, message: 'Cliente registrado' };
