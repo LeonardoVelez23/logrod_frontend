@@ -57,6 +57,29 @@ export class ResetPasswordComponent implements OnInit {
     return { isValid: true };
   }
 
+  // Métodos de comprobación en tiempo real para el checklist interactivo de restablecimiento
+  pwdHasMinLength(): boolean {
+    return (this.newPassword() || '').length >= 8;
+  }
+
+  pwdHasUppercase(): boolean {
+    return /[A-Z]/.test(this.newPassword() || '');
+  }
+
+  pwdHasNumber(): boolean {
+    return /[0-9]/.test(this.newPassword() || '');
+  }
+
+  pwdHasSpecialChar(): boolean {
+    return /[^A-Za-z0-9]/.test(this.newPassword() || '');
+  }
+
+  pwdMatch(): boolean {
+    const pwd = this.newPassword() || '';
+    const confirm = this.confirmPassword() || '';
+    return pwd.length > 0 && confirm.length > 0 && pwd === confirm;
+  }
+
   onSubmit() {
     if (!this.token()) {
       this.errorMessage.set('Token no encontrado en la dirección URL.');
