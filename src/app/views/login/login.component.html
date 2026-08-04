@@ -120,7 +120,7 @@
                   Recordarme
                 </label>
               </div>
-              <a href="#" (click)="$event.preventDefault()" class="small fw-semibold text-primary text-decoration-none hover-underline">
+              <a routerLink="/forgot-password" class="small fw-semibold text-primary text-decoration-none hover-underline">
                 ¿Olvidó su contraseña?
               </a>
             </div>
@@ -220,7 +220,7 @@
               </div>
 
               <!-- Contraseña -->
-              <div class="col-6 mb-3">
+              <div class="col-6 mb-2">
                 <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Contraseña</label>
                 <input 
                   type="password" 
@@ -232,7 +232,7 @@
               </div>
 
               <!-- Confirmar -->
-              <div class="col-6 mb-3">
+              <div class="col-6 mb-2">
                 <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Confirmar</label>
                 <input 
                   type="password" 
@@ -241,6 +241,14 @@
                   placeholder="••••••••" 
                   [(ngModel)]="registerData.confirmarContrasenia" 
                   required>
+              </div>
+
+              <!-- Requisitos de contraseña -->
+              <div class="col-12 mb-3">
+                <p class="text-secondary small mb-0" style="font-size: 11px;">
+                  <i class="bi bi-info-circle text-primary"></i>
+                  La contraseña debe tener <strong>mínimo 8 caracteres</strong>, incluir al menos <strong>una mayúscula</strong>, <strong>un número</strong> y <strong>un carácter especial</strong> (ej: @, #, $, !).
+                </p>
               </div>
             </div>
 
