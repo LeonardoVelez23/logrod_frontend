@@ -20,11 +20,14 @@
     <div class="navbar-right">
 
       <div class="user-profile" *ngIf="currentUser">
-        <div class="user-info d-none d-md-flex flex-column text-end me-2 align-items-end" style="line-height: 1.2;">
+        <div class="user-info d-none d-md-flex flex-column text-end me-2 align-items-end" style="line-height: 1.2; cursor: pointer;" (click)="openProfileModal()">
           <span class="fw-semibold text-dark" style="font-size: 0.85rem;">{{ currentUser.nombres }} {{ currentUser.apellidos }}</span>
-          <span class="text-secondary text-uppercase" style="font-size: 0.7rem;">{{ currentUser.rol }}</span>
+          <span class="text-secondary text-uppercase" style="font-size: 0.7rem;">{{ currentUser.tipo_cliente || currentUser.rol }}</span>
         </div>
-        <div class="avatar" [title]="currentUser.correo_electronico">{{ userInitials }}</div>
+        <div class="avatar" [title]="'Ver Mi Perfil (' + currentUser.correo_electronico + ')'" style="cursor: pointer;" (click)="openProfileModal()">{{ userInitials }}</div>
+        <button (click)="openProfileModal()" class="btn-logout d-inline-flex align-items-center justify-content-center me-1" title="Mi Perfil">
+          <span class="material-symbols-outlined">account_circle</span>
+        </button>
         <button (click)="logout()" class="btn-logout d-inline-flex align-items-center justify-content-center" title="Cerrar sesión">
           <span class="material-symbols-outlined">logout</span>
         </button>
@@ -98,7 +101,105 @@
     </main>
   </div>
   
+  <!-- Modal Mi Perfil -->
+  <app-modal
+    [isOpen]="showProfileModal"
+    title="Mi Perfil"
+    size="lg"
+    (onClose)="closeProfileModal()"
+  >
+    <div modal-body *ngIf="currentUser">
+      <div class="d-flex align-items-center gap-3 p-3 mb-4 rounded-4" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1)); border: 1px solid rgba(99, 102, 241, 0.2);">
+        <div class="avatar" style="width: 54px; height: 54px; font-size: 1.2rem;">{{ userInitials }}</div>
+        <div>
+          <h5 class="mb-0 fw-bold" style="color: var(--text-primary);">{{ profileForm.nombres }} {{ profileForm.apellidos }}</h5>
+          <div class="d-flex align-items-center gap-2 mt-1">
+            <span class="badge bg-primary rounded-pill px-2 py-1" style="font-size: 0.75rem;">{{ profileForm.tipo_cliente || currentUser.rol }}</span>
+            <span class="text-secondary" style="font-size: 0.8rem;">{{ profileForm.correo_electronico }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mb-3 border-bottom pb-2">
+        <button 
+          type="button" 
+          class="btn btn-sm" 
+          [class.btn-primary]="activeProfileTab === 'datos'" 
+          [class.btn-outline-secondary]="activeProfileTab !== 'datos'"
+          (click)="activeProfileTab = 'datos'"
+        >
+          <span class="material-symbols-outlined align-middle fs-6 me-1">person</span> Datos Personales
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-sm" 
+          [class.btn-primary]="activeProfileTab === 'seguridad'" 
+          [class.btn-outline-secondary]="activeProfileTab !== 'seguridad'"
+          (click)="activeProfileTab = 'seguridad'"
+        >
+          <span class="material-symbols-outlined align-middle fs-6 me-1">lock</span> Seguridad y Contraseña
+        </button>
+      </div>
+
+      <form (ngSubmit)="onSubmitProfile()" id="profileForm">
+        <!-- Tab 1: Datos Personales -->
+        <div *ngIf="activeProfileTab === 'datos'" class="row g-3">
+          <div class="col-md-6 form-group">
+            <label class="form-label text-secondary fw-semibold">Identificación (Cédula/DNI)</label>
+            <input type="text" [value]="profileForm.identificacion" class="form-control bg-light" readonly />
+          </div>
+          <div class="col-md-6 form-group">
+            <label class="form-label text-secondary fw-semibold">Correo Electrónico</label>
+            <input type="email" [value]="profileForm.correo_electronico" class="form-control bg-light" readonly />
+          </div>
+          <div class="col-md-6 form-group">
+            <label class="form-label text-secondary fw-semibold">Nombres *</label>
+            <input type="text" [(ngModel)]="profileForm.nombres" name="nombres" required class="form-control" />
+          </div>
+          <div class="col-md-6 form-group">
+            <label class="form-label text-secondary fw-semibold">Apellidos *</label>
+            <input type="text" [(ngModel)]="profileForm.apellidos" name="apellidos" required class="form-control" />
+          </div>
+          <div class="col-md-6 form-group">
+            <label class="form-label text-secondary fw-semibold">Teléfono</label>
+            <input type="text" [(ngModel)]="profileForm.telefono" name="telefono" placeholder="0987654321" class="form-control" />
+          </div>
+          <div class="col-md-6 form-group" *ngIf="currentRole === 'cliente'">
+            <label class="form-label text-secondary fw-semibold">Tipo de Cliente *</label>
+            <select [(ngModel)]="profileForm.tipo_cliente" name="tipo_cliente" required class="form-control">
+              <option value="Estudiante">Estudiante</option>
+              <option value="Docente">Docente</option>
+              <option value="Personal Administrativo">Personal Administrativo</option>
+              <option value="Persona externa">Persona externa</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tab 2: Seguridad y Contraseña -->
+        <div *ngIf="activeProfileTab === 'seguridad'" class="row g-3">
+          <div class="col-md-6 form-group">
+            <label class="form-label text-secondary fw-semibold">Nueva Contraseña</label>
+            <input type="password" [(ngModel)]="profileForm.nuevaContrasenia" name="nuevaContrasenia" placeholder="••••••••" class="form-control" />
+          </div>
+          <div class="col-md-6 form-group">
+            <label class="form-label text-secondary fw-semibold">Confirmar Nueva Contraseña</label>
+            <input type="password" [(ngModel)]="profileForm.confirmarContrasenia" name="confirmarContrasenia" placeholder="••••••••" class="form-control" />
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div modal-footer>
+      <button type="button" class="btn btn-secondary" (click)="closeProfileModal()" [disabled]="savingProfile">Cancelar</button>
+      <button type="submit" form="profileForm" class="btn btn-primary" [disabled]="savingProfile">
+        <span class="btn-spinner" *ngIf="savingProfile"></span>
+        {{ savingProfile ? 'Guardando...' : 'Guardar Cambios' }}
+      </button>
+    </div>
+  </app-modal>
+
   <!-- Contenedor global de notificaciones toast -->
   <app-toast></app-toast>
 </div>
+
 

@@ -76,9 +76,20 @@ export class AuthService {
     return !!localStorage.getItem('token');
   }
 
+  // Actualizar datos del usuario actual en memoria y localStorage
+  updateCurrentUser(updatedData: any) {
+    if (typeof window !== 'undefined') {
+      const current = this.currentUser();
+      const newUserData = { ...current, ...updatedData };
+      localStorage.setItem('user', JSON.stringify(newUserData));
+      this.currentUser.set(newUserData);
+    }
+  }
+
   // Obtener el rol del usuario actual
   getCurrentRole(): 'cliente' | 'empleado' | 'mesero' | 'cajero' | 'cocinero' | 'admin' | null {
     const user = this.currentUser();
     return user ? user.rol : null;
   }
 }
+
