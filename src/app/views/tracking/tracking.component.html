@@ -10,33 +10,18 @@
     </button>
   </div>
 
-  <!-- Barra de Filtros y Búsqueda -->
+  <!-- Barra de Búsqueda -->
   <div class="glass-card p-3 mb-4 rounded-4 shadow-sm">
-    <div class="row g-2">
-      <div class="col-md-8">
-        <div class="input-group">
-          <span class="input-group-text bg-white border-end-0">
-            <span class="material-symbols-outlined text-secondary fs-5">search</span>
-          </span>
-          <input
-            type="text"
-            [(ngModel)]="searchTerm"
-            placeholder="Buscar por código de pedido o modalidad..."
-            class="form-control border-start-0"
-          />
-        </div>
-      </div>
-      <div class="col-md-4">
-        <select [(ngModel)]="statusFilter" class="form-select">
-          <option value="">-- Todos los estados --</option>
-          <option value="solicitado">Solicitado</option>
-          <option value="confirmado">Confirmado</option>
-          <option value="en preparación">En preparación</option>
-          <option value="listo">Listo para retirar</option>
-          <option value="entregado">Entregado</option>
-          <option value="cancelado">Cancelado</option>
-        </select>
-      </div>
+    <div class="input-group">
+      <span class="input-group-text bg-white border-end-0">
+        <span class="material-symbols-outlined text-secondary fs-5">search</span>
+      </span>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Buscar por código de pedido o modalidad..."
+        class="form-control border-start-0"
+      />
     </div>
   </div>
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrderService, Pedido } from '../../services/order.service';
@@ -13,7 +13,7 @@ import { ModalComponent } from '../../components/modal/modal.component';
   templateUrl: './tracking.component.html',
   styleUrl: './tracking.component.css'
 })
-export class TrackingComponent implements OnInit {
+export class TrackingComponent implements OnInit, OnDestroy {
   private orderService = inject(OrderService);
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
@@ -31,12 +31,39 @@ export class TrackingComponent implements OnInit {
   // Control de Cancelación
   cancellingId: number | null = null;
 
+  // Temporizador para Polling en Tiempo Real
+  private pollingTimerId: any;
+
   ngOnInit() {
-    this.loadPedidos();
+    this.loadPedidos(false);
+    this.startRealtimePolling();
   }
 
-  loadPedidos() {
-    this.loading = true;
+  ngOnDestroy() {
+    this.stopRealtimePolling();
+  }
+
+  startRealtimePolling() {
+    if (typeof window !== 'undefined') {
+      this.stopRealtimePolling();
+      // Consultar silenciosamente el backend cada 3 segundos para actualización en vivo
+      this.pollingTimerId = setInterval(() => {
+        this.loadPedidos(true);
+      }, 3000);
+    }
+  }
+
+  stopRealtimePolling() {
+    if (this.pollingTimerId) {
+      clearInterval(this.pollingTimerId);
+      this.pollingTimerId = null;
+    }
+  }
+
+  loadPedidos(isSilent: boolean = false) {
+    if (!isSilent) {
+      this.loading = true;
+    }
 
     // 1. Intentar obtener la lista completa del servidor
     this.orderService.getPedidos().subscribe({
@@ -45,6 +72,12 @@ export class TrackingComponent implements OnInit {
           this.pedidos = response.data.sort((a, b) => (b.id || 0) - (a.id || 0));
           if (typeof window !== 'undefined') {
             localStorage.setItem('my_orders', JSON.stringify(this.pedidos));
+          }
+          if (this.selectedPedido) {
+            const updated = this.pedidos.find(p => p.id === this.selectedPedido?.id);
+            if (updated) {
+              this.selectedPedido = updated;
+            }
           }
           this.loading = false;
           this.cdr.detectChanges();

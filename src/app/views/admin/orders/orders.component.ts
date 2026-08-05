@@ -168,6 +168,14 @@ export class OrdersComponent implements OnInit {
     return this.authService.getCurrentRole() === 'cocinero';
   }
 
+  // Verifica si el pedido ya cuenta con asignaciones completas (mesero y cocinero)
+  get tieneAsignaciones(): boolean {
+    if (!this.selectedPedido) return false;
+    const tieneMesero = !!(this.selectedPedido.empleado_id || this.selectedPedido.empleadoResponsable);
+    const tieneCocinero = !!(this.selectedPedido.empleado_preparacion_id || this.selectedPedido.empleadoPreparacion);
+    return tieneMesero && tieneCocinero;
+  }
+
   // Cambiar el día que se está viendo en el tablero
   cambiarFecha(fecha: string) {
     this.selectedFecha = fecha;
