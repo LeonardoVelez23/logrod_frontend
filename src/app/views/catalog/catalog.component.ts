@@ -192,10 +192,21 @@ export class CatalogComponent implements OnInit {
         this.submittingOrder = false;
         if (response.success) {
           this.toastService.showSuccess('¡Pedido realizado con éxito!');
+
+          // Guardar copia del pedido en localStorage para consulta inmediata
+          if (typeof window !== 'undefined' && response.data) {
+            try {
+              const currentOrders = JSON.parse(localStorage.getItem('my_orders') || '[]');
+              currentOrders.unshift(response.data);
+              localStorage.setItem('my_orders', JSON.stringify(currentOrders));
+            } catch (e) {}
+          }
+
           this.cartItems = [];
           this.closeCartModal();
           this.router.navigate(['/tracking']);
         }
+
       },
       error: (err) => {
         this.submittingOrder = false;

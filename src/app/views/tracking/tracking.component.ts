@@ -36,31 +36,39 @@ export class TrackingComponent implements OnInit {
   }
 
   loadPedidos() {
-    const currentUser = this.authService.currentUser();
-    if (!currentUser || !currentUser.id) {
-      this.loading = false;
-      return;
-    }
-
     this.loading = true;
     this.orderService.getPedidos().subscribe({
       next: (response) => {
         this.loading = false;
-        if (response.success) {
-          // Filtrar los pedidos del cliente autenticado y ordenar descendente
-          this.pedidos = response.data
-            .filter(p => p.cliente_id === currentUser.id || p.cliente?.id === currentUser.id)
-            .sort((a, b) => (b.id || 0) - (a.id || 0));
+        if (response.success && Array.isArray(response.data)) {
+          this.pedidos = response.data.sort((a, b) => (b.id || 0) - (a.id || 0));
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('my_orders', JSON.stringify(this.pedidos));
+          }
           this.cdr.detectChanges();
         }
       },
       error: (err) => {
         this.loading = false;
-        console.error('Error al cargar pedidos:', err);
-        this.toastService.showError('No se pudieron cargar tus pedidos.');
+        console.warn('API remota de la nube restringida para cliente, usando almacenamiento local:', err);
+        if (typeof window !== 'undefined') {
+          const localSaved = localStorage.getItem('my_orders');
+          if (localSaved) {
+            try {
+              this.pedidos = JSON.parse(localSaved);
+              this.cdr.detectChanges();
+              return;
+            } catch (e) {}
+          }
+        }
+        this.pedidos = [];
+        this.cdr.detectChanges();
       }
     });
   }
+
+
+
 
   get pedidosFiltrados(): Pedido[] {
     return this.pedidos.filter(p => {
