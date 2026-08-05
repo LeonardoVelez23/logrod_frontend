@@ -37,35 +37,82 @@ export class TrackingComponent implements OnInit {
 
   loadPedidos() {
     this.loading = true;
+
+    // 1. Intentar obtener la lista completa del servidor
     this.orderService.getPedidos().subscribe({
       next: (response) => {
-        this.loading = false;
         if (response.success && Array.isArray(response.data)) {
           this.pedidos = response.data.sort((a, b) => (b.id || 0) - (a.id || 0));
           if (typeof window !== 'undefined') {
             localStorage.setItem('my_orders', JSON.stringify(this.pedidos));
           }
+          this.loading = false;
           this.cdr.detectChanges();
         }
       },
-      error: (err) => {
-        this.loading = false;
-        console.warn('API remota de la nube restringida para cliente, usando almacenamiento local:', err);
+      error: () => {
+        // 2. Si GET /pedidos devuelve 403 en Railway, consultar en vivo cada pedido por su ID (GET /pedidos/:id)
         if (typeof window !== 'undefined') {
           const localSaved = localStorage.getItem('my_orders');
           if (localSaved) {
             try {
-              this.pedidos = JSON.parse(localSaved);
-              this.cdr.detectChanges();
-              return;
+              const savedList: Pedido[] = JSON.parse(localSaved);
+              if (savedList.length > 0) {
+                this.refreshOrdersById(savedList);
+                return;
+              }
             } catch (e) {}
           }
         }
+        this.loading = false;
         this.pedidos = [];
         this.cdr.detectChanges();
       }
     });
   }
+
+  // Consultar en vivo el estado actualizado de cada pedido por su ID desde el backend (GET /api/v1/pedidos/:id)
+  refreshOrdersById(orderList: Pedido[]) {
+    let completedCount = 0;
+    const updatedList: Pedido[] = [...orderList];
+
+    orderList.forEach((ord, index) => {
+      if (ord.id) {
+        this.orderService.getPedidoById(ord.id).subscribe({
+          next: (res) => {
+            if (res.success && res.data) {
+              updatedList[index] = res.data;
+            }
+            completedCount++;
+            if (completedCount === orderList.length) {
+              this.finalizeOrderRefresh(updatedList);
+            }
+          },
+          error: () => {
+            completedCount++;
+            if (completedCount === orderList.length) {
+              this.finalizeOrderRefresh(updatedList);
+            }
+          }
+        });
+      } else {
+        completedCount++;
+        if (completedCount === orderList.length) {
+          this.finalizeOrderRefresh(updatedList);
+        }
+      }
+    });
+  }
+
+  finalizeOrderRefresh(updatedList: Pedido[]) {
+    this.loading = false;
+    this.pedidos = updatedList.sort((a, b) => (b.id || 0) - (a.id || 0));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('my_orders', JSON.stringify(this.pedidos));
+    }
+    this.cdr.detectChanges();
+  }
+
 
 
 
