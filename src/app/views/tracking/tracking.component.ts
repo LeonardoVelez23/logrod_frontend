@@ -26,6 +26,9 @@ export class TrackingComponent implements OnInit, OnDestroy {
   searchTerm: string = '';
   statusFilter: string = '';
 
+  // IDs de pedidos que ya tienen pago registrado (para cambiar el botón inmediatamente)
+  pedidosPagados = new Set<number>();
+
   // Control de Modal de Detalle
   selectedPedido: Pedido | null = null;
   showDetailModal: boolean = false;
@@ -83,6 +86,12 @@ export class TrackingComponent implements OnInit, OnDestroy {
       next: (response) => {
         if (response.success && Array.isArray(response.data)) {
           this.pedidos = response.data.sort((a, b) => (b.id || 0) - (a.id || 0));
+          // Marcar pedidos que ya tienen pago registrado en el backend
+          this.pedidos.forEach(p => {
+            if (p.id && p.metodo_pago) {
+              this.pedidosPagados.add(p.id);
+            }
+          });
           if (typeof window !== 'undefined') {
             localStorage.setItem('my_orders', JSON.stringify(this.pedidos));
           }
@@ -250,6 +259,8 @@ export class TrackingComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.submittingPayment = false;
         if (response.success) {
+          // Marcar inmediatamente este pedido como pagado sin esperar recarga
+          this.pedidosPagados.add(this.paymentForm.pedido_id);
           this.toastService.showSuccess(`¡Pago de $${this.paymentForm.valor.toFixed(2)} registrado correctamente!`);
           this.closePaymentModal();
           this.loadPedidos();

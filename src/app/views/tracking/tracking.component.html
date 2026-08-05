@@ -130,12 +130,19 @@
               <span class="material-symbols-outlined fs-6 align-middle me-1">visibility</span> Ver Platos y Detalles
             </button>
             <button 
-              *ngIf="pedido.estado !== 'cancelado'" 
+              *ngIf="pedido.estado !== 'cancelado' && pedido.estado !== 'entregado' && !pedidosPagados.has(pedido.id!)"
               class="btn btn-success btn-sm rounded-pill px-3 text-white d-inline-flex align-items-center gap-1" 
               (click)="openPaymentModal(pedido)"
             >
               <span class="material-symbols-outlined fs-6">payments</span> Registrar Pago
             </button>
+            <span 
+              *ngIf="pedido.estado === 'entregado' || pedidosPagados.has(pedido.id!)"
+              class="badge bg-success text-white rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
+              style="font-size: 0.8rem;"
+            >
+              <span class="material-symbols-outlined fs-6">check_circle</span> Pago Completado
+            </span>
           </div>
 
           <button 
