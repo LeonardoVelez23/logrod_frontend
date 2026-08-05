@@ -2,6 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrderService, Pedido } from '../../services/order.service';
+import { PagoService, Pago } from '../../services/pago.service';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { ModalComponent } from '../../components/modal/modal.component';
@@ -15,6 +16,7 @@ import { ModalComponent } from '../../components/modal/modal.component';
 })
 export class TrackingComponent implements OnInit {
   private orderService = inject(OrderService);
+  private pagoService = inject(PagoService);
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
@@ -28,8 +30,19 @@ export class TrackingComponent implements OnInit {
   selectedPedido: Pedido | null = null;
   showDetailModal: boolean = false;
 
+  // Control de Modal de Pago
+  showPaymentModal: boolean = false;
+  submittingPayment: boolean = false;
+  paymentForm = {
+    pedido_id: 0,
+    valor: 0,
+    metodo_pago: 'efectivo' as 'efectivo' | 'tarjeta' | 'transferencia',
+    numero_referencia: ''
+  };
+
   // Control de Cancelación
   cancellingId: number | null = null;
+
 
   ngOnInit() {
     this.loadPedidos();
@@ -152,6 +165,71 @@ export class TrackingComponent implements OnInit {
     this.showDetailModal = false;
     this.selectedPedido = null;
   }
+
+  // Abrir Modal de Pago
+  openPaymentModal(pedido: Pedido) {
+    if (pedido.estado === 'cancelado') {
+      this.toastService.showError('Los pedidos cancelados no requieren pago.');
+      return;
+    }
+    if (!pedido.id) return;
+
+    this.paymentForm = {
+      pedido_id: pedido.id,
+      valor: pedido.valor_total,
+      metodo_pago: 'efectivo',
+      numero_referencia: ''
+    };
+    this.showPaymentModal = true;
+  }
+
+  closePaymentModal() {
+    this.showPaymentModal = false;
+    this.submittingPayment = false;
+  }
+
+  // Enviar formulario de pago al backend
+  submitPayment() {
+    if (!this.paymentForm.pedido_id || this.paymentForm.valor <= 0) {
+      this.toastService.showError('Datos de pago inválidos.');
+      return;
+    }
+
+    if ((this.paymentForm.metodo_pago === 'transferencia' || this.paymentForm.metodo_pago === 'tarjeta') && !this.paymentForm.numero_referencia.trim()) {
+      this.toastService.showError('Ingrese el número de referencia del comprobante o transacción.');
+      return;
+    }
+
+    this.submittingPayment = true;
+    const now = new Date();
+    const fechaStr = now.toISOString().split('T')[0];
+
+    const payload: Pago = {
+      pedido_id: this.paymentForm.pedido_id,
+      fecha: fechaStr,
+      valor: this.paymentForm.valor,
+      metodo_pago: this.paymentForm.metodo_pago,
+      numero_referencia: this.paymentForm.numero_referencia.trim() || null,
+      estado: 'aprobado'
+    };
+
+    this.pagoService.createPago(payload).subscribe({
+      next: (response) => {
+        this.submittingPayment = false;
+        if (response.success) {
+          this.toastService.showSuccess(`¡Pago de $${this.paymentForm.valor.toFixed(2)} registrado correctamente!`);
+          this.closePaymentModal();
+          this.loadPedidos();
+        }
+      },
+      error: (err) => {
+        this.submittingPayment = false;
+        console.error('Error al registrar pago:', err);
+        this.toastService.showError(err.error?.message || 'Error al registrar el pago.');
+      }
+    });
+  }
+
 
   // Cancelar pedido si está en estado 'solicitado'
   cancelPedido(pedidoId: number | undefined) {

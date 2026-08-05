@@ -140,9 +140,18 @@
 
         <!-- Botones de Acción -->
         <div class="d-flex justify-content-between align-items-center pt-2 flex-wrap gap-2">
-          <button class="btn btn-outline-primary btn-sm rounded-pill px-3" (click)="openDetailModal(pedido)">
-            <span class="material-symbols-outlined fs-6 align-middle me-1">visibility</span> Ver Platos y Detalles
-          </button>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-outline-primary btn-sm rounded-pill px-3" (click)="openDetailModal(pedido)">
+              <span class="material-symbols-outlined fs-6 align-middle me-1">visibility</span> Ver Platos y Detalles
+            </button>
+            <button 
+              *ngIf="pedido.estado !== 'cancelado'" 
+              class="btn btn-success btn-sm rounded-pill px-3 text-white d-inline-flex align-items-center gap-1" 
+              (click)="openPaymentModal(pedido)"
+            >
+              <span class="material-symbols-outlined fs-6">payments</span> Registrar Pago
+            </button>
+          </div>
 
           <button 
             *ngIf="pedido.estado === 'solicitado'" 
@@ -151,7 +160,7 @@
             (click)="cancelPedido(pedido.id)"
           >
             <span class="material-symbols-outlined fs-6 align-middle me-1">close</span> 
-            {{ cancellingId === pedido.id ? 'Canceling...' : 'Cancelar Pedido' }}
+            {{ cancellingId === pedido.id ? 'Cancelando...' : 'Cancelar Pedido' }}
           </button>
         </div>
       </div>
@@ -222,5 +231,55 @@
       <button class="btn btn-secondary" (click)="closeDetailModal()">Cerrar</button>
     </div>
   </app-modal>
+
+  <!-- Modal de Registro de Pago -->
+  <app-modal
+    [isOpen]="showPaymentModal"
+    title="Registrar Pago de Pedido"
+    size="md"
+    (onClose)="closePaymentModal()"
+  >
+    <div modal-body>
+      <div class="alert alert-info py-2 px-3 rounded-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="fw-semibold fs-7">Monto Total a Pagar:</span>
+          <span class="fw-bold fs-5 text-primary">${{ paymentForm.valor | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <form (ngSubmit)="submitPayment()" id="paymentForm">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Método de Pago *</label>
+          <select [(ngModel)]="paymentForm.metodo_pago" name="metodo_pago" required class="form-select">
+            <option value="efectivo">💵 Efectivo (Pago presencial en caja)</option>
+            <option value="tarjeta">💳 Tarjeta de Crédito/Débito</option>
+            <option value="transferencia">🏦 Transferencia Bancaria</option>
+          </select>
+        </div>
+
+        <div class="mb-3" *ngIf="paymentForm.metodo_pago === 'tarjeta' || paymentForm.metodo_pago === 'transferencia'">
+          <label class="form-label fw-semibold">Número de Referencia / Comprobante *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="paymentForm.numero_referencia" 
+            name="numero_referencia" 
+            placeholder="Ej. REF-987654321" 
+            required 
+            class="form-control" 
+          />
+          <small class="form-text text-muted">Ingrese el número de váucher o código de transferencia.</small>
+        </div>
+      </form>
+    </div>
+
+    <div modal-footer>
+      <button type="button" class="btn btn-secondary" (click)="closePaymentModal()" [disabled]="submittingPayment">Cancelar</button>
+      <button type="submit" form="paymentForm" class="btn btn-success px-4" [disabled]="submittingPayment">
+        <span class="btn-spinner" *ngIf="submittingPayment"></span>
+        {{ submittingPayment ? 'Confirmar Pago' : 'Confirmar Pago' }}
+      </button>
+    </div>
+  </app-modal>
 </div>
+
 
