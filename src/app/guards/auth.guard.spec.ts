@@ -111,4 +111,42 @@ describe('roleGuard', () => {
     expect(result).toBe(false);
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
   });
+
+  it('should redirect mesero/cocinero to /admin/orders when role is not allowed', () => {
+    const mockToken = createMockToken({ rol: 'mesero' });
+    localStorage.setItem('token', mockToken);
+    const guard = roleGuard(['admin']);
+
+    const result = TestBed.runInInjectionContext(() =>
+      guard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
+    );
+
+    expect(result).toBe(false);
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/admin/orders']);
+  });
+
+  it('should redirect to /admin/dashboard for other internal roles when role is not allowed', () => {
+    const mockToken = createMockToken({ rol: 'cajero' });
+    localStorage.setItem('token', mockToken);
+    const guard = roleGuard(['admin']);
+
+    const result = TestBed.runInInjectionContext(() =>
+      guard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
+    );
+
+    expect(result).toBe(false);
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/admin/dashboard']);
+  });
+
+  it('should redirect to /admin/dashboard when the token cannot be decoded', () => {
+    localStorage.setItem('token', 'token-malformado-no-jwt');
+    const guard = roleGuard(['admin']);
+
+    const result = TestBed.runInInjectionContext(() =>
+      guard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
+    );
+
+    expect(result).toBe(false);
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/admin/dashboard']);
+  });
 });

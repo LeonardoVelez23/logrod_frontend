@@ -1,9 +1,17 @@
 <div class="catalog-container animate-fade-in">
-  <div class="view-header">
+  <div class="view-header d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
       <h2>Menú</h2>
       <p>Explora los platos y bebidas disponibles en Sabor Politécnico.</p>
     </div>
+
+    <!-- Botón Flotante/Cabecera de Carrito -->
+    <button class="btn btn-primary d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill shadow-sm" (click)="openCartModal()">
+      <span class="material-symbols-outlined fs-5">shopping_cart</span>
+      <span class="fw-bold">Carrito</span>
+      <span class="badge bg-white text-primary rounded-circle px-2 py-1" style="font-size: 0.8rem;">{{ cartCount }}</span>
+      <span class="fw-bold ms-1" *ngIf="cartTotal > 0">${{ cartTotal | number:'1.2-2' }}</span>
+    </button>
   </div>
 
   <!-- Barra de Filtros -->
@@ -52,11 +60,23 @@
         <h3 class="product-name">{{ prod.nombre }}</h3>
         <p class="product-desc" *ngIf="prod.descripcion">{{ prod.descripcion }}</p>
 
-        <div class="product-footer">
-          <span class="product-price">${{ prod.precio | number:'1.2-2' }}</span>
-          <span class="stock-badge" [ngClass]="prod.cantidad_disponible > 5 ? 'stock-ok' : 'stock-low'">
-            {{ prod.cantidad_disponible > 0 ? prod.cantidad_disponible + ' disponibles' : 'Agotado' }}
-          </span>
+        <div class="product-footer flex-column gap-2 mt-auto">
+          <div class="d-flex align-items-center justify-content-between w-100">
+            <span class="product-price">${{ prod.precio | number:'1.2-2' }}</span>
+            <span class="stock-badge" [ngClass]="prod.cantidad_disponible > 5 ? 'stock-ok' : 'stock-low'">
+              {{ prod.cantidad_disponible > 0 ? prod.cantidad_disponible + ' dispon.' : 'Agotado' }}
+            </span>
+          </div>
+
+          <button 
+            type="button" 
+            class="btn btn-outline-primary btn-sm w-100 d-inline-flex align-items-center justify-content-center gap-1 mt-1 rounded-3"
+            [disabled]="prod.cantidad_disponible <= 0"
+            (click)="addToCart(prod)"
+          >
+            <span class="material-symbols-outlined fs-6">add_shopping_cart</span>
+            {{ prod.cantidad_disponible > 0 ? 'Agregar al Carrito' : 'Agotado' }}
+          </button>
         </div>
       </div>
     </div>
@@ -66,4 +86,104 @@
       <p>No se encontraron productos que coincidan con la búsqueda.</p>
     </div>
   </div>
+
+  <!-- Modal del Carrito de Compras -->
+  <app-modal
+    [isOpen]="showCartModal"
+    title="Mi Carrito de Compras"
+    size="lg"
+    (onClose)="closeCartModal()"
+  >
+    <div modal-body>
+      <!-- Si el carrito está vacío -->
+      <div *ngIf="cartItems.length === 0" class="text-center py-5">
+        <span class="material-symbols-outlined text-secondary" style="font-size: 4rem;">remove_shopping_cart</span>
+        <h5 class="mt-3 text-secondary">Tu carrito está vacío</h5>
+        <p class="text-muted fs-7">Explora el catálogo y agrega tus platos favoritos.</p>
+      </div>
+
+      <!-- Lista de Productos en el Carrito -->
+      <div *ngIf="cartItems.length > 0">
+        <div class="table-responsive mb-3">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Producto</th>
+                <th class="text-center">Precio</th>
+                <th class="text-center" style="width: 140px;">Cantidad</th>
+                <th class="text-end">Subtotal</th>
+                <th class="text-center" style="width: 50px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of cartItems">
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <img *ngIf="item.producto.imagen_url" [src]="item.producto.imagen_url" class="rounded-3" style="width: 40px; height: 40px; object-fit: cover;" />
+                    <div>
+                      <div class="fw-semibold text-dark">{{ item.producto.nombre }}</div>
+                      <small class="text-muted">{{ item.producto.categoria?.nombre }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center">${{ item.producto.precio | number:'1.2-2' }}</td>
+                <td class="text-center">
+                  <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary" (click)="updateCartQuantity(item.producto.id, -1)">-</button>
+                    <span class="btn btn-light px-3 fw-bold" style="pointer-events: none;">{{ item.cantidad }}</span>
+                    <button type="button" class="btn btn-outline-secondary" (click)="updateCartQuantity(item.producto.id, 1)">+</button>
+                  </div>
+                </td>
+                <td class="text-end fw-bold text-primary">${{ (item.cantidad * item.producto.precio) | number:'1.2-2' }}</td>
+                <td class="text-center">
+                  <button type="button" class="btn btn-link text-danger p-0" (click)="removeFromCart(item.producto.id)" title="Eliminar">
+                    <span class="material-symbols-outlined fs-5">delete</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Selección de Modalidad -->
+        <div class="card bg-light border-0 p-3 mb-3 rounded-3">
+          <label class="form-label fw-bold text-dark mb-2">Modalidad del Pedido *</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="modalidad" id="modEnLinea" value="en línea" [(ngModel)]="selectedModalidad">
+              <label class="form-check-label fw-semibold" for="modEnLinea">
+                <span class="material-symbols-outlined align-middle fs-6 me-1">local_shipping</span> En línea (Para retirar)
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="modalidad" id="modPresencial" value="presencial" [(ngModel)]="selectedModalidad">
+              <label class="form-check-label fw-semibold" for="modPresencial">
+                <span class="material-symbols-outlined align-middle fs-6 me-1">storefront</span> Presencial (Consumo local)
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen del Total -->
+        <div class="d-flex justify-content-between align-items-center p-3 bg-primary bg-opacity-10 rounded-3 border border-primary border-opacity-25">
+          <span class="fs-6 fw-bold text-dark">Total del Pedido:</span>
+          <span class="fs-4 fw-extrabold text-primary">${{ cartTotal | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div modal-footer>
+      <button type="button" class="btn btn-secondary" (click)="closeCartModal()" [disabled]="submittingOrder">Cancelar</button>
+      <button 
+        type="button" 
+        class="btn btn-primary px-4" 
+        [disabled]="cartItems.length === 0 || submittingOrder"
+        (click)="submitOrder()"
+      >
+        <span class="btn-spinner" *ngIf="submittingOrder"></span>
+        {{ submittingOrder ? 'Procesando...' : 'Confirmar y Enviar Pedido' }}
+      </button>
+    </div>
+  </app-modal>
 </div>
+

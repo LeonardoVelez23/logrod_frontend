@@ -1,1 +1,226 @@
-<p>Tracking works</p>
+<div class="tracking-container animate-fade-in">
+  <div class="view-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1" style="color: var(--accent);">Mis Pedidos & Seguimiento</h2>
+      <p class="text-secondary mb-0">Rastrea el progreso en tiempo real de tus consumos en Sabor Politécnico.</p>
+    </div>
+
+    <button class="btn btn-outline-primary d-inline-flex align-items-center gap-1 rounded-pill" (click)="loadPedidos()">
+      <span class="material-symbols-outlined fs-5">refresh</span> Actualizar
+    </button>
+  </div>
+
+  <!-- Barra de Filtros y Búsqueda -->
+  <div class="glass-card p-3 mb-4 rounded-4 shadow-sm">
+    <div class="row g-2">
+      <div class="col-md-8">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0">
+            <span class="material-symbols-outlined text-secondary fs-5">search</span>
+          </span>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            placeholder="Buscar por código de pedido o modalidad..."
+            class="form-control border-start-0"
+          />
+        </div>
+      </div>
+      <div class="col-md-4">
+        <select [(ngModel)]="statusFilter" class="form-select">
+          <option value="">-- Todos los estados --</option>
+          <option value="solicitado">Solicitado</option>
+          <option value="confirmado">Confirmado</option>
+          <option value="en preparación">En preparación</option>
+          <option value="listo">Listo para retirar</option>
+          <option value="entregado">Entregado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cargando -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="text-secondary mt-2">Cargando tus pedidos...</p>
+  </div>
+
+  <!-- Sin Pedidos -->
+  <div *ngIf="!loading && pedidosFiltrados.length === 0" class="text-center py-5 glass-card rounded-4">
+    <span class="material-symbols-outlined text-secondary mb-2" style="font-size: 4rem;">receipt_long</span>
+    <h4 class="fw-bold text-dark">No hay pedidos registrados</h4>
+    <p class="text-secondary">Aún no has realizado pedidos o ningún pedido coincide con la búsqueda.</p>
+  </div>
+
+  <!-- Lista de Pedidos -->
+  <div *ngIf="!loading && pedidosFiltrados.length > 0" class="d-flex flex-column gap-4">
+    <div *ngFor="let pedido of pedidosFiltrados" class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 px-4 flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-3">
+          <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill">#{{ pedido.id }}</span>
+          <div>
+            <div class="fw-bold text-dark" style="font-size: 0.95rem;">
+              Modalidad: <span class="text-primary text-uppercase">{{ pedido.modalidad }}</span>
+            </div>
+            <small class="text-muted">Fecha: {{ pedido.fecha }} {{ pedido.hora }}</small>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+          <span class="badge rounded-pill px-3 py-2 fs-7 text-uppercase" [ngClass]="getStatusBadgeClass(pedido.estado)">
+            {{ pedido.estado }}
+          </span>
+          <span class="fs-5 fw-extrabold text-primary">${{ pedido.valor_total | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="card-body p-4">
+        <!-- Línea de Tiempo del Pedido (si no está cancelado) -->
+        <div *ngIf="pedido.estado !== 'cancelado'" class="timeline-stepper mb-4">
+          <div class="stepper-progress">
+            <div 
+              class="stepper-bar" 
+              [style.width.%]="getStepIndex(pedido.estado) >= 0 ? (getStepIndex(pedido.estado) * 25) : 0"
+            ></div>
+          </div>
+
+          <div class="stepper-nodes">
+            <!-- Paso 1: Solicitado -->
+            <div class="step-node" [class.completed]="getStepIndex(pedido.estado) >= 0" [class.active]="pedido.estado === 'solicitado'">
+              <div class="node-icon">
+                <span class="material-symbols-outlined">edit_note</span>
+              </div>
+              <span class="node-label">Solicitado</span>
+            </div>
+
+            <!-- Paso 2: Confirmado -->
+            <div class="step-node" [class.completed]="getStepIndex(pedido.estado) >= 1" [class.active]="pedido.estado === 'confirmado'">
+              <div class="node-icon">
+                <span class="material-symbols-outlined">check_circle</span>
+              </div>
+              <span class="node-label">Confirmado</span>
+            </div>
+
+            <!-- Paso 3: En Preparación -->
+            <div class="step-node" [class.completed]="getStepIndex(pedido.estado) >= 2" [class.active]="pedido.estado === 'en preparación'">
+              <div class="node-icon">
+                <span class="material-symbols-outlined">cooking</span>
+              </div>
+              <span class="node-label">En Cocina</span>
+            </div>
+
+            <!-- Paso 4: Listo -->
+            <div class="step-node" [class.completed]="getStepIndex(pedido.estado) >= 3" [class.active]="pedido.estado === 'listo'">
+              <div class="node-icon">
+                <span class="material-symbols-outlined">notifications_active</span>
+              </div>
+              <span class="node-label">Listo</span>
+            </div>
+
+            <!-- Paso 5: Entregado -->
+            <div class="step-node" [class.completed]="getStepIndex(pedido.estado) >= 4" [class.active]="pedido.estado === 'entregado'">
+              <div class="node-icon">
+                <span class="material-symbols-outlined">task_alt</span>
+              </div>
+              <span class="node-label">Entregado</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Banner si el pedido fue cancelado -->
+        <div *ngIf="pedido.estado === 'cancelado'" class="alert alert-danger d-flex align-items-center gap-2 rounded-3 mb-3">
+          <span class="material-symbols-outlined fs-4">cancel</span>
+          <div>
+            <strong>Este pedido ha sido cancelado.</strong> No se requiere pago ni procesamiento.
+          </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="d-flex justify-content-between align-items-center pt-2 flex-wrap gap-2">
+          <button class="btn btn-outline-primary btn-sm rounded-pill px-3" (click)="openDetailModal(pedido)">
+            <span class="material-symbols-outlined fs-6 align-middle me-1">visibility</span> Ver Platos y Detalles
+          </button>
+
+          <button 
+            *ngIf="pedido.estado === 'solicitado'" 
+            class="btn btn-outline-danger btn-sm rounded-pill px-3"
+            [disabled]="cancellingId === pedido.id"
+            (click)="cancelPedido(pedido.id)"
+          >
+            <span class="material-symbols-outlined fs-6 align-middle me-1">close</span> 
+            {{ cancellingId === pedido.id ? 'Canceling...' : 'Cancelar Pedido' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Detalle del Pedido -->
+  <app-modal
+    [isOpen]="showDetailModal"
+    [title]="'Detalle del Pedido #' + (selectedPedido?.id || '')"
+    size="lg"
+    (onClose)="closeDetailModal()"
+  >
+    <div modal-body *ngIf="selectedPedido">
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <small class="text-uppercase text-muted fw-bold">Modalidad</small>
+          <div class="fw-semibold text-primary text-uppercase">{{ selectedPedido.modalidad }}</div>
+        </div>
+        <div class="col-md-6">
+          <small class="text-uppercase text-muted fw-bold">Estado Actual</small>
+          <div>
+            <span class="badge rounded-pill px-3 py-1" [ngClass]="getStatusBadgeClass(selectedPedido.estado)">
+              {{ selectedPedido.estado }}
+            </span>
+          </div>
+        </div>
+        <div class="col-md-6" *ngIf="selectedPedido.empleadoResponsable">
+          <small class="text-uppercase text-muted fw-bold">Atendido por</small>
+          <div class="fw-semibold">{{ selectedPedido.empleadoResponsable.nombres }} {{ selectedPedido.empleadoResponsable.apellidos }}</div>
+        </div>
+        <div class="col-md-6">
+          <small class="text-uppercase text-muted fw-bold">Fecha de Registro</small>
+          <div>{{ selectedPedido.fecha }} {{ selectedPedido.hora }}</div>
+        </div>
+      </div>
+
+      <h6 class="fw-bold border-bottom pb-2 mb-3">Ítems Solicitados</h6>
+
+      <div class="table-responsive mb-3">
+        <table class="table table-sm table-striped align-middle">
+          <thead>
+            <tr>
+              <th>Plato / Producto</th>
+              <th class="text-center">Precio Unit.</th>
+              <th class="text-center">Cantidad</th>
+              <th class="text-end">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of selectedPedido.detalles">
+              <td class="fw-semibold">{{ item.producto?.nombre || 'Producto #' + item.producto_id }}</td>
+              <td class="text-center">${{ item.precio_unitario | number:'1.2-2' }}</td>
+              <td class="text-center">{{ item.cantidad }}</td>
+              <td class="text-end fw-bold text-primary">${{ item.subtotal | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 border">
+        <span class="fw-bold fs-6">Valor Total:</span>
+        <span class="fw-extrabold fs-4 text-primary">${{ selectedPedido.valor_total | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div modal-footer>
+      <button class="btn btn-secondary" (click)="closeDetailModal()">Cerrar</button>
+    </div>
+  </app-modal>
+</div>
+

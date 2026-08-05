@@ -1,7 +1,4 @@
-import { isDevMode } from '@angular/core';
+// URL base de la API Backend.
+// Conectado al backend local activo en desarrollo.
+export const API_BASE_URL = 'http://localhost:3000/api/v1';
 
-// Si la aplicación se está ejecutando localmente (desarrollo), apunta al localhost.
-// Si se compila para producción (despliegue final), se utilizará la URL pública de Railway.
-export const API_BASE_URL = isDevMode()
-  ? 'http://localhost:3000/api/v1'
-  : 'https://restaurantespambackend-production.up.railway.app/api/v1';
