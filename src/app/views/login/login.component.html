@@ -206,7 +206,7 @@
               </div>
 
               <!-- Teléfono -->
-              <div class="col-12 mb-2">
+              <div class="col-6 mb-2">
                 <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Teléfono</label>
                 <div class="input-group-custom">
                   <span class="input-icon material-symbols-outlined">call</span>
@@ -218,6 +218,25 @@
                     [(ngModel)]="registerData.telefono">
                 </div>
               </div>
+
+              <!-- Tipo de Cliente -->
+              <div class="col-6 mb-2">
+                <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Tipo de Cliente</label>
+                <div class="input-group-custom">
+                  <span class="input-icon material-symbols-outlined">school</span>
+                  <select 
+                    name="tipo_cliente" 
+                    class="form-control-custom" 
+                    [(ngModel)]="registerData.tipo_cliente" 
+                    required>
+                    <option value="Estudiante">Estudiante</option>
+                    <option value="Docente">Docente</option>
+                    <option value="Personal Administrativo">Personal Administrativo</option>
+                    <option value="Persona externa">Persona externa</option>
+                  </select>
+                </div>
+              </div>
+
 
               <!-- Contraseña -->
               <div class="col-6 mb-2">

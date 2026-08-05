@@ -43,8 +43,9 @@ export class LoginComponent {
     telefono: '',
     contrasenia: '',
     confirmarContrasenia: '',
-    tipo_cliente: 'cliente' // Por defecto (compatible con ENUM de base de datos)
+    tipo_cliente: 'Estudiante' // Opción por defecto (Estudiante, Docente, Personal Administrativo, Persona externa)
   };
+
 
   // Alternar entre login y registro
   toggleMode(login: boolean) {
