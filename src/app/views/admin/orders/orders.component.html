@@ -379,9 +379,9 @@
     <div *ngIf="selectedPedido" modal-footer>
       <button class="btn btn-secondary" (click)="closeDetail()">Cerrar</button>
 
-      <!-- Botón Guardar Asignación (solo admin) -->
+      <!-- Botón Guardar Asignación (solo admin cuando faltan asignaciones) -->
       <button
-        *ngIf="authService.getCurrentRole() === 'admin' && selectedPedido.estado !== 'entregado' && selectedPedido.estado !== 'cancelado'"
+        *ngIf="authService.getCurrentRole() === 'admin' && selectedPedido.estado !== 'entregado' && selectedPedido.estado !== 'cancelado' && !tieneAsignaciones"
         class="btn btn-save-asignacion"
         (click)="guardarAsignacion()"
         [disabled]="isSavingAsignacion"

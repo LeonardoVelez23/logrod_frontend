@@ -25,10 +25,7 @@
           <span class="text-secondary text-uppercase" style="font-size: 0.7rem;">{{ currentUser.tipo_cliente || currentUser.rol }}</span>
         </div>
         <div class="avatar" [title]="'Ver Mi Perfil (' + currentUser.correo_electronico + ')'" style="cursor: pointer;" (click)="openProfileModal()">{{ userInitials }}</div>
-        <button (click)="openProfileModal()" class="btn-logout d-inline-flex align-items-center justify-content-center me-1" title="Mi Perfil">
-          <span class="material-symbols-outlined">account_circle</span>
-        </button>
-        <button (click)="logout()" class="btn-logout d-inline-flex align-items-center justify-content-center" title="Cerrar sesión">
+        <button (click)="logout()" class="btn-logout d-inline-flex align-items-center justify-content-center ms-1" title="Cerrar sesión">
           <span class="material-symbols-outlined">logout</span>
         </button>
       </div>
@@ -114,7 +111,7 @@
         <div>
           <h5 class="mb-0 fw-bold" style="color: var(--text-primary);">{{ profileForm.nombres }} {{ profileForm.apellidos }}</h5>
           <div class="d-flex align-items-center gap-2 mt-1">
-            <span class="badge bg-primary rounded-pill px-2 py-1" style="font-size: 0.75rem;">{{ profileForm.tipo_cliente || currentUser.rol }}</span>
+            <span class="badge bg-primary rounded-pill px-2 py-1 text-capitalize" style="font-size: 0.75rem;">{{ currentRole === 'cliente' ? profileForm.tipo_cliente : (currentUser.cargo || currentUser.rol) }}</span>
             <span class="text-secondary" style="font-size: 0.8rem;">{{ profileForm.correo_electronico }}</span>
           </div>
         </div>
@@ -141,59 +138,123 @@
         </button>
       </div>
 
-      <form (ngSubmit)="onSubmitProfile()" id="profileForm">
+      <form (ngSubmit)="onSubmitProfile()" id="profileForm" autocomplete="off">
         <!-- Tab 1: Datos Personales -->
         <div *ngIf="activeProfileTab === 'datos'" class="row g-3">
           <div class="col-md-6 form-group">
             <label class="form-label text-secondary fw-semibold">Identificación (Cédula/DNI)</label>
-            <input type="text" [value]="profileForm.identificacion" class="form-control bg-light" readonly />
+            <input type="text" [value]="profileForm.identificacion" class="form-control bg-light text-muted" disabled readonly tabindex="-1" style="pointer-events: none;" />
           </div>
           <div class="col-md-6 form-group">
             <label class="form-label text-secondary fw-semibold">Correo Electrónico</label>
-            <input type="email" [value]="profileForm.correo_electronico" class="form-control bg-light" readonly />
+            <input type="email" [value]="profileForm.correo_electronico" class="form-control bg-light text-muted" disabled readonly tabindex="-1" style="pointer-events: none;" />
           </div>
           <div class="col-md-6 form-group">
-            <label class="form-label text-secondary fw-semibold">Nombres *</label>
-            <input type="text" [(ngModel)]="profileForm.nombres" name="nombres" required class="form-control" />
+            <label class="form-label text-secondary fw-semibold">Nombres</label>
+            <input type="text" [value]="profileForm.nombres" class="form-control bg-light text-muted" disabled readonly tabindex="-1" style="pointer-events: none;" />
           </div>
           <div class="col-md-6 form-group">
-            <label class="form-label text-secondary fw-semibold">Apellidos *</label>
-            <input type="text" [(ngModel)]="profileForm.apellidos" name="apellidos" required class="form-control" />
+            <label class="form-label text-secondary fw-semibold">Apellidos</label>
+            <input type="text" [value]="profileForm.apellidos" class="form-control bg-light text-muted" disabled readonly tabindex="-1" style="pointer-events: none;" />
           </div>
           <div class="col-md-6 form-group">
             <label class="form-label text-secondary fw-semibold">Teléfono</label>
-            <input type="text" [(ngModel)]="profileForm.telefono" name="telefono" placeholder="0987654321" class="form-control" />
+            <input type="text" [value]="profileForm.telefono" class="form-control bg-light text-muted" disabled readonly tabindex="-1" style="pointer-events: none;" />
           </div>
           <div class="col-md-6 form-group" *ngIf="currentRole === 'cliente'">
-            <label class="form-label text-secondary fw-semibold">Tipo de Cliente *</label>
-            <select [(ngModel)]="profileForm.tipo_cliente" name="tipo_cliente" required class="form-control">
-              <option value="Estudiante">Estudiante</option>
-              <option value="Docente">Docente</option>
-              <option value="Personal Administrativo">Personal Administrativo</option>
-              <option value="Persona externa">Persona externa</option>
-            </select>
+            <label class="form-label text-secondary fw-semibold">Tipo de Cliente</label>
+            <input type="text" [value]="profileForm.tipo_cliente" class="form-control bg-light text-muted" disabled readonly tabindex="-1" style="pointer-events: none;" />
           </div>
         </div>
 
         <!-- Tab 2: Seguridad y Contraseña -->
         <div *ngIf="activeProfileTab === 'seguridad'" class="row g-3">
+          <!-- Paso 1: Verificación OTP -->
+          <div class="col-12 p-3 rounded-3" style="background-color: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2);">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <label class="form-label text-dark fw-bold mb-0 d-flex align-items-center gap-1">
+                <span class="material-symbols-outlined fs-5 text-primary">verified_user</span>
+                1. Solicitar e ingresar código OTP *
+              </label>
+              <button 
+                type="button" 
+                class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
+                (click)="sendOtpCode()"
+                [disabled]="sendingOtp">
+                <span class="spinner-border spinner-border-sm" *ngIf="sendingOtp"></span>
+                <span class="material-symbols-outlined fs-6" *ngIf="!sendingOtp">mark_email_read</span>
+                <span>{{ sendingOtp ? 'Enviando...' : (otpSent ? 'Reenviar código OTP' : 'Enviar código al correo') }}</span>
+              </button>
+            </div>
+            <p class="text-secondary extra-small mb-2" style="font-size: 0.8rem;">
+              Haz clic en <strong>"Enviar código al correo"</strong> para recibir el código de 6 dígitos en <strong>{{ profileForm.correo_electronico }}</strong>.
+            </p>
+
+            <div class="input-group mt-2">
+              <span class="input-group-text bg-white"><span class="material-symbols-outlined fs-6">pin</span></span>
+              <input 
+                type="tel" 
+                name="otpCode" 
+                class="form-control fw-bold tracking-wider" 
+                placeholder="Ingresa el código OTP de 6 dígitos" 
+                inputmode="numeric"
+                maxlength="6"
+                autocomplete="one-time-code"
+                [(ngModel)]="otpCode"
+                required />
+            </div>
+          </div>
+
+          <!-- Paso 2: Establecer Nueva Contraseña -->
+          <div class="col-12 mt-3 mb-0">
+            <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-1" style="font-size: 0.9rem;">
+              <span class="material-symbols-outlined fs-5 text-primary">lock</span>
+              2. Nueva Contraseña
+            </h6>
+          </div>
           <div class="col-md-6 form-group">
             <label class="form-label text-secondary fw-semibold">Nueva Contraseña</label>
-            <input type="password" [(ngModel)]="profileForm.nuevaContrasenia" name="nuevaContrasenia" placeholder="••••••••" class="form-control" />
+            <input type="password" [(ngModel)]="profileForm.nuevaContrasenia" name="nuevaContrasenia" placeholder="••••••••" class="form-control" autocomplete="new-password" />
           </div>
           <div class="col-md-6 form-group">
             <label class="form-label text-secondary fw-semibold">Confirmar Nueva Contraseña</label>
-            <input type="password" [(ngModel)]="profileForm.confirmarContrasenia" name="confirmarContrasenia" placeholder="••••••••" class="form-control" />
+            <input type="password" [(ngModel)]="profileForm.confirmarContrasenia" name="confirmarContrasenia" placeholder="••••••••" class="form-control" autocomplete="new-password" />
+          </div>
+
+          <!-- Checklist de Requisitos -->
+          <div class="col-12" *ngIf="profileForm.nuevaContrasenia || profileForm.confirmarContrasenia">
+            <div class="p-2.5 bg-light rounded-3 border border-light-subtle" style="font-size: 11.5px;">
+              <div class="fw-semibold text-secondary mb-1" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Requisitos de contraseña:</div>
+              <div class="row g-1">
+                <div class="col-6 d-flex align-items-center gap-1" [class.text-success]="pwdHasMinLength()" [class.text-muted]="!pwdHasMinLength()" [class.fw-semibold]="pwdHasMinLength()">
+                  <i class="bi" [class.bi-check-circle-fill]="pwdHasMinLength()" [class.bi-circle]="!pwdHasMinLength()"></i> Mín. 8 caracteres
+                </div>
+                <div class="col-6 d-flex align-items-center gap-1" [class.text-success]="pwdHasUppercase()" [class.text-muted]="!pwdHasUppercase()" [class.fw-semibold]="pwdHasUppercase()">
+                  <i class="bi" [class.bi-check-circle-fill]="pwdHasUppercase()" [class.bi-circle]="!pwdHasUppercase()"></i> 1 Mayúscula (A-Z)
+                </div>
+                <div class="col-6 d-flex align-items-center gap-1" [class.text-success]="pwdHasNumber()" [class.text-muted]="!pwdHasNumber()" [class.fw-semibold]="pwdHasNumber()">
+                  <i class="bi" [class.bi-check-circle-fill]="pwdHasNumber()" [class.bi-circle]="!pwdHasNumber()"></i> 1 Número (0-9)
+                </div>
+                <div class="col-6 d-flex align-items-center gap-1" [class.text-success]="pwdHasSpecial()" [class.text-muted]="!pwdHasSpecial()" [class.fw-semibold]="pwdHasSpecial()">
+                  <i class="bi" [class.bi-check-circle-fill]="pwdHasSpecial()" [class.bi-circle]="!pwdHasSpecial()"></i> 1 Especial (@,#,$,!)
+                </div>
+                <div class="col-12 mt-1 d-flex align-items-center gap-1" [class.text-success]="pwdMatch()" [class.text-muted]="!pwdMatch()" [class.fw-semibold]="pwdMatch()">
+                  <i class="bi" [class.bi-check-circle-fill]="pwdMatch()" [class.bi-circle]="!pwdMatch()"></i> Las contraseñas coinciden
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </form>
     </div>
 
     <div modal-footer>
-      <button type="button" class="btn btn-secondary" (click)="closeProfileModal()" [disabled]="savingProfile">Cancelar</button>
-      <button type="submit" form="profileForm" class="btn btn-primary" [disabled]="savingProfile">
+      <button type="button" class="btn btn-secondary" (click)="closeProfileModal()" [disabled]="savingProfile">
+        {{ activeProfileTab === 'datos' ? 'Cerrar' : 'Cancelar' }}
+      </button>
+      <button type="submit" form="profileForm" class="btn btn-primary" *ngIf="activeProfileTab === 'seguridad'" [disabled]="savingProfile || !canSubmitPasswordChange()">
         <span class="btn-spinner" *ngIf="savingProfile"></span>
-        {{ savingProfile ? 'Guardando...' : 'Guardar Cambios' }}
+        {{ savingProfile ? 'Guardando...' : 'Cambiar Contraseña' }}
       </button>
     </div>
   </app-modal>

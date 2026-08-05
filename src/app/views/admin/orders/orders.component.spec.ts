@@ -251,6 +251,13 @@ describe('OrdersComponent (Admin)', () => {
     expect(component.puedeCrearPedidos).toBe(true);
     expect(component.puedeCancelar).toBe(true);
     expect(component.esCocinero).toBe(false);
+
+    // tieneAsignaciones
+    component.selectedPedido = { ...mockPedidos[0] };
+    expect(component.tieneAsignaciones).toBe(false);
+
+    component.selectedPedido = { ...mockPedidos[0], empleado_id: 10, empleado_preparacion_id: 11 };
+    expect(component.tieneAsignaciones).toBe(true);
   });
 
   it('loadPedidos debe manejar errores y detener el estado de carga', () => {
