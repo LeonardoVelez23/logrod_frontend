@@ -51,7 +51,7 @@ export class TrackingComponent implements OnInit, OnDestroy {
   };
 
   // Temporizador para Polling en Tiempo Real
-  private pollingTimerId: any = null;
+  private pollingTimerId: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit() {
     this.loadPedidos(false);
