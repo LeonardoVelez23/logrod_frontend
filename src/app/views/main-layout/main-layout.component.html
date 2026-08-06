@@ -25,10 +25,7 @@
           <span class="text-secondary text-uppercase" style="font-size: 0.7rem;">{{ currentUser.tipo_cliente || currentUser.rol }}</span>
         </div>
         <div class="avatar" [title]="'Ver Mi Perfil (' + currentUser.correo_electronico + ')'" style="cursor: pointer;" (click)="openProfileModal()">{{ userInitials }}</div>
-        <button (click)="openProfileModal()" class="btn-logout d-inline-flex align-items-center justify-content-center me-1" title="Mi Perfil">
-          <span class="material-symbols-outlined">account_circle</span>
-        </button>
-        <button (click)="logout()" class="btn-logout d-inline-flex align-items-center justify-content-center" title="Cerrar sesión">
+        <button (click)="logout()" class="btn-logout d-inline-flex align-items-center justify-content-center ms-1" title="Cerrar sesión">
           <span class="material-symbols-outlined">logout</span>
         </button>
       </div>
@@ -153,16 +150,16 @@
             <input type="email" [value]="profileForm.correo_electronico" class="form-control bg-light text-muted" disabled readonly tabindex="-1" style="pointer-events: none;" />
           </div>
           <div class="col-md-6 form-group">
-            <label class="form-label text-secondary fw-semibold">Nombres *</label>
-            <input type="text" [(ngModel)]="profileForm.nombres" name="nombres" required class="form-control" autocomplete="off" />
+            <label class="form-label text-secondary fw-semibold">Nombres</label>
+            <input type="text" [value]="profileForm.nombres" class="form-control bg-light text-muted" disabled readonly tabindex="-1" style="pointer-events: none;" />
           </div>
           <div class="col-md-6 form-group">
-            <label class="form-label text-secondary fw-semibold">Apellidos *</label>
-            <input type="text" [(ngModel)]="profileForm.apellidos" name="apellidos" required class="form-control" autocomplete="off" />
+            <label class="form-label text-secondary fw-semibold">Apellidos</label>
+            <input type="text" [value]="profileForm.apellidos" class="form-control bg-light text-muted" disabled readonly tabindex="-1" style="pointer-events: none;" />
           </div>
           <div class="col-md-6 form-group">
             <label class="form-label text-secondary fw-semibold">Teléfono</label>
-            <input type="text" [(ngModel)]="profileForm.telefono" name="telefono" placeholder="0987654321" class="form-control" autocomplete="off" />
+            <input type="text" [value]="profileForm.telefono" class="form-control bg-light text-muted" disabled readonly tabindex="-1" style="pointer-events: none;" />
           </div>
           <div class="col-md-6 form-group" *ngIf="currentRole === 'cliente'">
             <label class="form-label text-secondary fw-semibold">Tipo de Cliente</label>
@@ -252,10 +249,12 @@
     </div>
 
     <div modal-footer>
-      <button type="button" class="btn btn-secondary" (click)="closeProfileModal()" [disabled]="savingProfile">Cancelar</button>
-      <button type="submit" form="profileForm" class="btn btn-primary" [disabled]="savingProfile">
+      <button type="button" class="btn btn-secondary" (click)="closeProfileModal()" [disabled]="savingProfile">
+        {{ activeProfileTab === 'datos' ? 'Cerrar' : 'Cancelar' }}
+      </button>
+      <button type="submit" form="profileForm" class="btn btn-primary" *ngIf="activeProfileTab === 'seguridad'" [disabled]="savingProfile || !canSubmitPasswordChange()">
         <span class="btn-spinner" *ngIf="savingProfile"></span>
-        {{ savingProfile ? 'Guardando...' : 'Guardar Cambios' }}
+        {{ savingProfile ? 'Guardando...' : 'Cambiar Contraseña' }}
       </button>
     </div>
   </app-modal>

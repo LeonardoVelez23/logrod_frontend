@@ -168,6 +168,14 @@ export class OrdersComponent implements OnInit {
     return this.authService.getCurrentRole() === 'cocinero';
   }
 
+  // Verifica si el pedido ya cuenta con asignaciones completas (mesero y cocinero)
+  get tieneAsignaciones(): boolean {
+    if (!this.selectedPedido) return false;
+    const tieneMesero = !!(this.selectedPedido.empleado_id || this.selectedPedido.empleadoResponsable);
+    const tieneCocinero = !!(this.selectedPedido.empleado_preparacion_id || this.selectedPedido.empleadoPreparacion);
+    return tieneMesero && tieneCocinero;
+  }
+
   // Cambiar el día que se está viendo en el tablero
   cambiarFecha(fecha: string) {
     this.selectedFecha = fecha;
@@ -259,11 +267,17 @@ export class OrdersComponent implements OnInit {
   entregarPedido(pedido: Pedido) {
     if (!pedido.id) return;
 
-    // Verificar si ya existe un pago aprobado para este pedido
+    // 1. Si el pedido ya trae registrado método de pago o váucher de referencia, entregar directamente sin pedir cobro
+    if (pedido.metodo_pago || pedido.numero_referencia) {
+      this.ejecutarEntregaDirecta(pedido);
+      return;
+    }
+
+    // 2. Verificar en la base de datos si ya existe un pago aprobado para este pedido
     this.pagoService.getPagoByPedido(pedido.id).subscribe({
       next: (response) => {
         if (response.success && response.data && response.data.estado === 'aprobado') {
-          // Ya tiene pago aprobado, entregar directamente
+          // Ya tiene pago aprobado en la BD, entregar directamente
           this.ejecutarEntregaDirecta(pedido);
         } else {
           // El pago no está aprobado. Abrir pasarela de cobro

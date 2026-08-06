@@ -59,7 +59,7 @@
         <tbody>
           <tr *ngFor="let prod of getProductosFiltrados()" class="product-row">
             <td class="thumb-col">
-              <img *ngIf="prod.imagen_url" [src]="prod.imagen_url" [alt]="prod.nombre" class="product-thumb" />
+              <img *ngIf="prod.imagen_url" [src]="prod.imagen_url" [alt]="prod.nombre" class="product-thumb" loading="lazy" decoding="async" />
               <div *ngIf="!prod.imagen_url" class="product-thumb product-thumb-empty">
                 <i class="bi bi-image"></i>
               </div>

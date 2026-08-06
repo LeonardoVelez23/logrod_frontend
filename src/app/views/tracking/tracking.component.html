@@ -10,34 +10,48 @@
     </button>
   </div>
 
-  <!-- Barra de Filtros y Búsqueda -->
+  <!-- Barra de Búsqueda -->
   <div class="glass-card p-3 mb-4 rounded-4 shadow-sm">
-    <div class="row g-2">
-      <div class="col-md-8">
-        <div class="input-group">
-          <span class="input-group-text bg-white border-end-0">
-            <span class="material-symbols-outlined text-secondary fs-5">search</span>
-          </span>
-          <input
-            type="text"
-            [(ngModel)]="searchTerm"
-            placeholder="Buscar por código de pedido o modalidad..."
-            class="form-control border-start-0"
-          />
-        </div>
-      </div>
-      <div class="col-md-4">
-        <select [(ngModel)]="statusFilter" class="form-select">
-          <option value="">-- Todos los estados --</option>
-          <option value="solicitado">Solicitado</option>
-          <option value="confirmado">Confirmado</option>
-          <option value="en preparación">En preparación</option>
-          <option value="listo">Listo para retirar</option>
-          <option value="entregado">Entregado</option>
-          <option value="cancelado">Cancelado</option>
-        </select>
-      </div>
+    <div class="input-group">
+      <span class="input-group-text bg-white border-end-0">
+        <span class="material-symbols-outlined text-secondary fs-5">search</span>
+      </span>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Buscar por código de pedido o modalidad..."
+        class="form-control border-start-0"
+      />
     </div>
+  </div>
+
+  <!-- Pestañas de Navegación de Pedidos -->
+  <div class="d-flex gap-2 mb-4 flex-wrap">
+    <button 
+      class="btn rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-semibold"
+      [class.btn-primary]="activeTab === 'en_curso'"
+      [class.btn-outline-secondary]="activeTab !== 'en_curso'"
+      (click)="activeTab = 'en_curso'"
+    >
+      <span class="material-symbols-outlined fs-5">local_shipping</span>
+      <span>Pedidos en Curso</span>
+      <span class="badge rounded-pill bg-white text-primary ms-1" *ngIf="pedidosEnCurso.length > 0">
+        {{ pedidosEnCurso.length }}
+      </span>
+    </button>
+
+    <button 
+      class="btn rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-semibold"
+      [class.btn-primary]="activeTab === 'historial'"
+      [class.btn-outline-secondary]="activeTab !== 'historial'"
+      (click)="activeTab = 'historial'"
+    >
+      <span class="material-symbols-outlined fs-5">history</span>
+      <span>Historial de Pedidos</span>
+      <span class="badge rounded-pill bg-secondary text-white ms-1" *ngIf="pedidosHistorial.length > 0">
+        {{ pedidosHistorial.length }}
+      </span>
+    </button>
   </div>
 
   <!-- Cargando -->
@@ -48,16 +62,26 @@
     <p class="text-secondary mt-2">Cargando tus pedidos...</p>
   </div>
 
-  <!-- Sin Pedidos -->
-  <div *ngIf="!loading && pedidosFiltrados.length === 0" class="text-center py-5 glass-card rounded-4">
-    <span class="material-symbols-outlined text-secondary mb-2" style="font-size: 4rem;">receipt_long</span>
-    <h4 class="fw-bold text-dark">No hay pedidos registrados</h4>
-    <p class="text-secondary">Aún no has realizado pedidos o ningún pedido coincide con la búsqueda.</p>
+  <!-- Sin Pedidos En Curso -->
+  <div *ngIf="!loading && activeTab === 'en_curso' && pedidosEnCurso.length === 0" class="text-center py-5 glass-card rounded-4">
+    <span class="material-symbols-outlined text-secondary mb-2" style="font-size: 4rem;">check_circle</span>
+    <h4 class="fw-bold text-dark">No tienes pedidos activos en curso</h4>
+    <p class="text-secondary">Tus pedidos ya entregados o cancelados se encuentran en la sección <strong>Historial de Pedidos</strong>.</p>
+    <button class="btn btn-outline-primary rounded-pill px-4 mt-2" (click)="activeTab = 'historial'" *ngIf="pedidosHistorial.length > 0">
+      Ver Historial de Pedidos ({{ pedidosHistorial.length }})
+    </button>
   </div>
 
-  <!-- Lista de Pedidos -->
-  <div *ngIf="!loading && pedidosFiltrados.length > 0" class="d-flex flex-column gap-4">
-    <div *ngFor="let pedido of pedidosFiltrados" class="card border-0 shadow-sm rounded-4 overflow-hidden">
+  <!-- Sin Pedidos en Historial -->
+  <div *ngIf="!loading && activeTab === 'historial' && pedidosHistorial.length === 0" class="text-center py-5 glass-card rounded-4">
+    <span class="material-symbols-outlined text-secondary mb-2" style="font-size: 4rem;">receipt_long</span>
+    <h4 class="fw-bold text-dark">No hay historial de pedidos</h4>
+    <p class="text-secondary">Los pedidos completados o cancelados aparecerán aquí.</p>
+  </div>
+
+  <!-- PESTAÑA 1: Pedidos en Curso (Seguimiento Activo) -->
+  <div *ngIf="!loading && activeTab === 'en_curso' && pedidosEnCurso.length > 0" class="d-flex flex-column gap-4">
+    <div *ngFor="let pedido of pedidosEnCurso" class="card border-0 shadow-sm rounded-4 overflow-hidden">
       <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 px-4 flex-wrap gap-2">
         <div class="d-flex align-items-center gap-3">
           <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill">#{{ pedido.id }}</span>
@@ -78,12 +102,12 @@
       </div>
 
       <div class="card-body p-4">
-        <!-- Línea de Tiempo del Pedido (si no está cancelado) -->
-        <div *ngIf="pedido.estado !== 'cancelado'" class="timeline-stepper mb-4">
+        <!-- Línea de Tiempo del Pedido -->
+        <div class="timeline-stepper mb-4">
           <div class="stepper-progress">
             <div 
               class="stepper-bar" 
-              [style.width.%]="getStepIndex(pedido.estado) >= 0 ? (getStepIndex(pedido.estado) * 25) : 0"
+              [style.width.%]="getStepIndex(pedido.estado) >= 0 ? (getStepIndex(pedido.estado) * 33.33) : 0"
             ></div>
           </div>
 
@@ -119,30 +143,30 @@
               </div>
               <span class="node-label">Listo</span>
             </div>
-
-            <!-- Paso 5: Entregado -->
-            <div class="step-node" [class.completed]="getStepIndex(pedido.estado) >= 4" [class.active]="pedido.estado === 'entregado'">
-              <div class="node-icon">
-                <span class="material-symbols-outlined">task_alt</span>
-              </div>
-              <span class="node-label">Entregado</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Banner si el pedido fue cancelado -->
-        <div *ngIf="pedido.estado === 'cancelado'" class="alert alert-danger d-flex align-items-center gap-2 rounded-3 mb-3">
-          <span class="material-symbols-outlined fs-4">cancel</span>
-          <div>
-            <strong>Este pedido ha sido cancelado.</strong> No se requiere pago ni procesamiento.
           </div>
         </div>
 
         <!-- Botones de Acción -->
         <div class="d-flex justify-content-between align-items-center pt-2 flex-wrap gap-2">
-          <button class="btn btn-outline-primary btn-sm rounded-pill px-3" (click)="openDetailModal(pedido)">
-            <span class="material-symbols-outlined fs-6 align-middle me-1">visibility</span> Ver Platos y Detalles
-          </button>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-outline-primary btn-sm rounded-pill px-3" (click)="openDetailModal(pedido)">
+              <span class="material-symbols-outlined fs-6 align-middle me-1">visibility</span> Ver Platos y Detalles
+            </button>
+            <button 
+              *ngIf="pedido.estado !== 'solicitado' && pedido.estado !== 'cancelado' && pedido.estado !== 'entregado' && !pedidosPagados.has(pedido.id!)"
+              class="btn btn-success btn-sm rounded-pill px-3 text-white d-inline-flex align-items-center gap-1 shadow-sm"
+              (click)="openPaymentGatewayModal(pedido)"
+            >
+              <span class="material-symbols-outlined fs-6">credit_card</span> Pagar en Línea
+            </button>
+            <span 
+              *ngIf="pedido.estado === 'entregado' || pedidosPagados.has(pedido.id!)"
+              class="badge bg-success text-white rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
+              style="font-size: 0.8rem;"
+            >
+              <span class="material-symbols-outlined fs-6">check_circle</span> Pago Completado
+            </span>
+          </div>
 
           <button 
             *ngIf="pedido.estado === 'solicitado'" 
@@ -151,7 +175,46 @@
             (click)="cancelPedido(pedido.id)"
           >
             <span class="material-symbols-outlined fs-6 align-middle me-1">close</span> 
-            {{ cancellingId === pedido.id ? 'Canceling...' : 'Cancelar Pedido' }}
+            {{ cancellingId === pedido.id ? 'Cancelando...' : 'Cancelar Pedido' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PESTAÑA 2: Historial de Pedidos (Entregados / Cancelados) -->
+  <div *ngIf="!loading && activeTab === 'historial' && pedidosHistorial.length > 0" class="d-flex flex-column gap-3">
+    <div *ngFor="let pedido of pedidosHistorial" class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div 
+            class="rounded-circle d-flex align-items-center justify-content-center p-3"
+            [ngClass]="pedido.estado === 'entregado' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'"
+            style="width: 48px; height: 48px;"
+          >
+            <span class="material-symbols-outlined fs-4">{{ pedido.estado === 'entregado' ? 'task_alt' : 'cancel' }}</span>
+          </div>
+
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="badge bg-secondary fs-7 rounded-pill">#{{ pedido.id }}</span>
+              <span class="fw-bold text-dark fs-6">{{ pedido.modalidad | uppercase }}</span>
+              <span class="badge rounded-pill px-2.5 py-1 text-uppercase ms-1" [ngClass]="getStatusBadgeClass(pedido.estado)">
+                {{ pedido.estado }}
+              </span>
+            </div>
+            <small class="text-muted d-block">Fecha: {{ pedido.fecha }} {{ pedido.hora }}</small>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <div class="text-end">
+            <small class="text-uppercase text-muted d-block fw-semibold" style="font-size: 11px;">Valor Total</small>
+            <span class="fs-5 fw-extrabold text-primary">${{ pedido.valor_total | number:'1.2-2' }}</span>
+          </div>
+
+          <button class="btn btn-outline-primary btn-sm rounded-pill px-3" (click)="openDetailModal(pedido)">
+            <span class="material-symbols-outlined fs-6 align-middle me-1">visibility</span> Ver Detalles
           </button>
         </div>
       </div>
@@ -222,5 +285,137 @@
       <button class="btn btn-secondary" (click)="closeDetailModal()">Cerrar</button>
     </div>
   </app-modal>
+
+  <!-- PASARELA DE PAGO SIMULADA (Sabor Politécnico Pay) -->
+  <app-modal
+    [isOpen]="showPaymentModal"
+    title="Pasarela de Pago Segura — Sabor Politécnico Pay"
+    size="md"
+    (onClose)="closePaymentModal()"
+  >
+    <div modal-body *ngIf="pedidoPorPagar">
+      <!-- Encabezado de la Pasarela -->
+      <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+        <div class="security-badge">
+          <span class="material-symbols-outlined fs-6">verified_user</span>
+          <span>Encriptación SSL 256-Bit</span>
+        </div>
+        <button type="button" class="btn-fill-test-card" (click)="fillTestCardData()">
+          <span class="material-symbols-outlined fs-6 align-middle me-1">bolt</span> Cargar Tarjeta de Prueba
+        </button>
+      </div>
+
+      <!-- Tarjeta de Crédito Virtual Interactiva -->
+      <div class="simulated-card-wrapper">
+        <div class="simulated-card">
+          <div class="card-brand-row">
+            <span class="card-brand-title">
+              <span class="material-symbols-outlined fs-5">contactless</span> Sabor Politécnico Pay
+            </span>
+            <div class="card-chip"></div>
+          </div>
+          <div class="card-number-display">
+            {{ cardForm.numeroTarjeta || '•••• •••• •••• ••••' }}
+          </div>
+          <div class="card-details-row">
+            <div class="card-holder-col">
+              <div class="card-label">Titular de la Tarjeta</div>
+              <div class="card-holder-name">{{ cardForm.nombreTitular || 'NOMBRE Y APELLIDO' }}</div>
+            </div>
+            <div class="card-expiry-col">
+              <div class="card-label">Vence</div>
+              <div class="card-expiry-date">{{ cardForm.expiracion || 'MM/YY' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen de Pedido a Cobrar -->
+      <div class="p-3 bg-light rounded-3 border mb-3 text-center">
+        <small class="text-uppercase text-secondary fw-semibold d-block" style="font-size: 11px;">Monto Total a Pagar</small>
+        <div class="fw-extrabold text-primary" style="font-size: 28px;">
+          ${{ pedidoPorPagar.valor_total | number:'1.2-2' }}
+        </div>
+        <small class="text-muted">Pedido <strong>#{{ pedidoPorPagar.id }}</strong> &bull; Modalidad: <strong>{{ pedidoPorPagar.modalidad | uppercase }}</strong></small>
+      </div>
+
+      <!-- Formulario de Datos de Tarjeta -->
+      <form (ngSubmit)="submitSimulatedPayment()" id="gatewayForm">
+        <div class="mb-3">
+          <label class="form-label text-secondary fw-semibold fs-7">Número de Tarjeta *</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white"><span class="material-symbols-outlined fs-6 text-secondary">credit_card</span></span>
+            <input 
+              type="text" 
+              class="form-control font-monospace" 
+              placeholder="4532 0000 0000 0000" 
+              [value]="cardForm.numeroTarjeta"
+              (input)="onCardNumberInput($event)"
+              maxlength="19"
+              required 
+            />
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-secondary fw-semibold fs-7">Nombre del Titular *</label>
+          <input 
+            type="text" 
+            class="form-control text-uppercase" 
+            placeholder="COMO APARECE EN LA TARJETA" 
+            [(ngModel)]="cardForm.nombreTitular"
+            name="nombreTitular"
+            required 
+          />
+        </div>
+
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label text-secondary fw-semibold fs-7">Expiración (MM/YY) *</label>
+            <input 
+              type="text" 
+              class="form-control text-center" 
+              placeholder="12/28" 
+              [value]="cardForm.expiracion"
+              (input)="onExpiryInput($event)"
+              maxlength="5"
+              required 
+            />
+          </div>
+          <div class="col-6">
+            <label class="form-label text-secondary fw-semibold fs-7">CVV / CVC *</label>
+
+            <input 
+              type="password" 
+              class="form-control text-center" 
+              placeholder="123" 
+              [(ngModel)]="cardForm.cvv"
+              name="cvv"
+              maxlength="4"
+              required 
+            />
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div modal-footer class="w-100 d-flex gap-2">
+      <button type="button" class="btn btn-secondary flex-fill" (click)="closePaymentModal()" [disabled]="submittingPayment">
+        Cancelar
+      </button>
+      <button 
+        type="submit" 
+        form="gatewayForm" 
+        class="btn btn-success flex-fill fw-bold py-2" 
+        [disabled]="submittingPayment"
+        style="background: linear-gradient(135deg, #10b981, #059669); border: none;"
+      >
+        <span class="spinner-border spinner-border-sm me-1" *ngIf="submittingPayment"></span>
+        <span class="material-symbols-outlined fs-6 align-middle me-1" *ngIf="!submittingPayment">lock</span>
+        <span>{{ submittingPayment ? 'Procesando con la Pasarela...' : ('Procesar Pago ($' + (pedidoPorPagar?.valor_total | number:'1.2-2') + ')') }}</span>
+      </button>
+    </div>
+  </app-modal>
 </div>
+
 

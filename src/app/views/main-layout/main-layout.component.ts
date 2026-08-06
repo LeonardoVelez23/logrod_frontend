@@ -138,6 +138,10 @@ export class MainLayoutComponent {
     return this.pwdHasMinLength() && this.pwdHasUppercase() && this.pwdHasNumber() && this.pwdHasSpecial() && this.pwdMatch();
   }
 
+  canSubmitPasswordChange(): boolean {
+    return this.allPwdValid() && !!this.otpCode && this.otpCode.trim().length === 6;
+  }
+
   // Enviar código OTP por correo electrónico al usuario autenticado
   sendOtpCode() {
     if (!this.profileForm.correo_electronico) return;
