@@ -49,7 +49,7 @@
   <div class="products-grid">
     <div *ngFor="let prod of getProductosFiltrados()" class="product-card glass-card">
       <div class="product-image-wrapper">
-        <img *ngIf="prod.imagen_url" [src]="prod.imagen_url" [alt]="prod.nombre" class="product-image" />
+        <img *ngIf="prod.imagen_url" [src]="prod.imagen_url" [alt]="prod.nombre" class="product-image" loading="lazy" decoding="async" />
         <div *ngIf="!prod.imagen_url" class="product-image product-image-empty">
           <i class="bi bi-image"></i>
         </div>

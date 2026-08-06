@@ -267,11 +267,17 @@ export class OrdersComponent implements OnInit {
   entregarPedido(pedido: Pedido) {
     if (!pedido.id) return;
 
-    // Verificar si ya existe un pago aprobado para este pedido
+    // 1. Si el pedido ya trae registrado método de pago o váucher de referencia, entregar directamente sin pedir cobro
+    if (pedido.metodo_pago || pedido.numero_referencia) {
+      this.ejecutarEntregaDirecta(pedido);
+      return;
+    }
+
+    // 2. Verificar en la base de datos si ya existe un pago aprobado para este pedido
     this.pagoService.getPagoByPedido(pedido.id).subscribe({
       next: (response) => {
         if (response.success && response.data && response.data.estado === 'aprobado') {
-          // Ya tiene pago aprobado, entregar directamente
+          // Ya tiene pago aprobado en la BD, entregar directamente
           this.ejecutarEntregaDirecta(pedido);
         } else {
           // El pago no está aprobado. Abrir pasarela de cobro

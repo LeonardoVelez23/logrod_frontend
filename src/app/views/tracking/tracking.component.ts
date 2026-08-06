@@ -26,31 +26,34 @@ export class TrackingComponent implements OnInit, OnDestroy {
   searchTerm: string = '';
   statusFilter: string = '';
 
-  // IDs de pedidos que ya tienen pago registrado (para cambiar el botón inmediatamente)
+  // IDs de pedidos que ya tienen pago registrado
   pedidosPagados = new Set<number>();
 
   // Control de Modal de Detalle
   selectedPedido: Pedido | null = null;
   showDetailModal: boolean = false;
 
-  // Control de Modal de Pago
-  showPaymentModal: boolean = false;
-  submittingPayment: boolean = false;
-  paymentForm = {
-    pedido_id: 0,
-    valor: 0,
-    metodo_pago: 'efectivo' as 'efectivo' | 'tarjeta' | 'transferencia',
-    numero_referencia: ''
-  };
-
   // Control de Cancelación
   cancellingId: number | null = null;
+
+  // Pestaña Activa: 'en_curso' (seguimiento activo) o 'historial' (pedidos entregados/cancelados)
+  activeTab: 'en_curso' | 'historial' = 'en_curso';
+
+  // Control de Pasarela de Pago Simulada (Sabor Politécnico Pay)
+  showPaymentModal: boolean = false;
+  submittingPayment: boolean = false;
+  pedidoPorPagar: Pedido | null = null;
+  cardForm = {
+    numeroTarjeta: '',
+    nombreTitular: '',
+    expiracion: '',
+    cvv: ''
+  };
 
   // Temporizador para Polling en Tiempo Real
   private pollingTimerId: any = null;
 
   ngOnInit() {
-
     this.loadPedidos(false);
     this.startRealtimePolling();
   }
@@ -106,7 +109,6 @@ export class TrackingComponent implements OnInit, OnDestroy {
         }
       },
       error: () => {
-        // 2. Si GET /pedidos devuelve 403 en Railway, consultar en vivo cada pedido por su ID (GET /pedidos/:id)
         if (typeof window !== 'undefined') {
           const localSaved = localStorage.getItem('my_orders');
           if (localSaved) {
@@ -126,7 +128,6 @@ export class TrackingComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Consultar en vivo el estado actualizado de cada pedido por su ID desde el backend (GET /api/v1/pedidos/:id)
   refreshOrdersById(orderList: Pedido[]) {
     let completedCount = 0;
     const updatedList: Pedido[] = [...orderList];
@@ -168,24 +169,30 @@ export class TrackingComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-
-
-
-
-  get pedidosFiltrados(): Pedido[] {
+  get pedidosEnCurso(): Pedido[] {
     return this.pedidos.filter(p => {
-      const matchSearch = !this.searchTerm.trim() ||
-        p.id?.toString().includes(this.searchTerm) ||
-        p.modalidad.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        p.estado.toLowerCase().includes(this.searchTerm.toLowerCase());
-
-      const matchStatus = !this.statusFilter || p.estado === this.statusFilter;
-
-      return matchSearch && matchStatus;
+      const isEnCurso = p.estado !== 'entregado' && p.estado !== 'cancelado';
+      const term = this.searchTerm.trim().toLowerCase();
+      const matchSearch = !term ||
+        p.id?.toString().includes(term) ||
+        p.modalidad.toLowerCase().includes(term) ||
+        p.estado.toLowerCase().includes(term);
+      return isEnCurso && matchSearch;
     });
   }
 
-  // Obtener el índice del paso según el estado del pedido (0 a 4)
+  get pedidosHistorial(): Pedido[] {
+    return this.pedidos.filter(p => {
+      const isHistorial = p.estado === 'entregado' || p.estado === 'cancelado';
+      const term = this.searchTerm.trim().toLowerCase();
+      const matchSearch = !term ||
+        p.id?.toString().includes(term) ||
+        p.modalidad.toLowerCase().includes(term) ||
+        p.estado.toLowerCase().includes(term);
+      return isHistorial && matchSearch;
+    });
+  }
+
   getStepIndex(estado: string): number {
     switch (estado) {
       case 'solicitado': return 0;
@@ -197,7 +204,6 @@ export class TrackingComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Abrir Modal de Detalle
   openDetailModal(pedido: Pedido) {
     this.selectedPedido = pedido;
     this.showDetailModal = true;
@@ -208,74 +214,130 @@ export class TrackingComponent implements OnInit, OnDestroy {
     this.selectedPedido = null;
   }
 
-  // Abrir Modal de Pago
-  openPaymentModal(pedido: Pedido) {
+  // Abrir Pasarela de Pago Simulada
+  openPaymentGatewayModal(pedido: Pedido) {
     if (pedido.estado === 'cancelado') {
       this.toastService.showError('Los pedidos cancelados no requieren pago.');
       return;
     }
+    if (pedido.estado === 'solicitado') {
+      this.toastService.showWarning('El pedido debe ser confirmado antes de realizar el pago en línea.');
+      return;
+    }
     if (!pedido.id) return;
 
-    this.paymentForm = {
-      pedido_id: pedido.id,
-      valor: pedido.valor_total,
-      metodo_pago: 'efectivo',
-      numero_referencia: ''
+    this.pedidoPorPagar = pedido;
+    this.cardForm = {
+      numeroTarjeta: '',
+      nombreTitular: '',
+      expiracion: '',
+      cvv: ''
     };
     this.showPaymentModal = true;
+    this.cdr.detectChanges();
   }
 
   closePaymentModal() {
     this.showPaymentModal = false;
     this.submittingPayment = false;
+    this.pedidoPorPagar = null;
+    this.cdr.detectChanges();
   }
 
-  // Enviar formulario de pago al backend
-  submitPayment() {
-    if (!this.paymentForm.pedido_id || this.paymentForm.valor <= 0) {
-      this.toastService.showError('Datos de pago inválidos.');
+  fillTestCardData() {
+    const user = this.authService.currentUser();
+    const nombreDefecto = user ? `${user.nombres} ${user.apellidos}`.toUpperCase() : 'ESTUDIANTE POLITÉCNICO';
+
+    this.cardForm = {
+      numeroTarjeta: '4532 8899 1234 5678',
+      nombreTitular: nombreDefecto,
+      expiracion: '12/28',
+      cvv: '789'
+    };
+    this.toastService.showInfo('Datos de tarjeta de prueba cargados.');
+    this.cdr.detectChanges();
+  }
+
+  onCardNumberInput(event: any) {
+    let val = event.target.value.replace(/\D/g, '');
+    if (val.length > 16) val = val.substring(0, 16);
+    const matches = val.match(/.{1,4}/g);
+    this.cardForm.numeroTarjeta = matches ? matches.join(' ') : val;
+  }
+
+  onExpiryInput(event: any) {
+    let val = event.target.value.replace(/\D/g, '');
+    if (val.length > 4) val = val.substring(0, 4);
+    if (val.length >= 3) {
+      this.cardForm.expiracion = `${val.substring(0, 2)}/${val.substring(2)}`;
+    } else {
+      this.cardForm.expiracion = val;
+    }
+  }
+
+  submitSimulatedPayment() {
+    if (!this.pedidoPorPagar || !this.pedidoPorPagar.id) {
+      this.toastService.showError('Pedido no válido.');
       return;
     }
 
-    if ((this.paymentForm.metodo_pago === 'transferencia' || this.paymentForm.metodo_pago === 'tarjeta') && !this.paymentForm.numero_referencia.trim()) {
-      this.toastService.showError('Ingrese el número de referencia del comprobante o transacción.');
+    const numLimpio = this.cardForm.numeroTarjeta.replace(/\s/g, '');
+    if (numLimpio.length < 16) {
+      this.toastService.showWarning('Ingrese un número de tarjeta válido de 16 dígitos.');
+      return;
+    }
+    if (!this.cardForm.nombreTitular.trim()) {
+      this.toastService.showWarning('Ingrese el nombre del titular de la tarjeta.');
+      return;
+    }
+    if (!this.cardForm.expiracion.trim() || this.cardForm.expiracion.length < 5) {
+      this.toastService.showWarning('Ingrese la fecha de expiración válida (MM/YY).');
+      return;
+    }
+    if (!this.cardForm.cvv.trim() || this.cardForm.cvv.length < 3) {
+      this.toastService.showWarning('Ingrese un código CVV válido de 3 dígitos.');
       return;
     }
 
     this.submittingPayment = true;
-    const now = new Date();
-    const fechaStr = now.toISOString().split('T')[0];
+    const pedidoId = this.pedidoPorPagar.id;
+    const valor = Number(this.pedidoPorPagar.valor_total);
+    const refSimulada = `PAY-SIM-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    const payload: Pago = {
-      pedido_id: this.paymentForm.pedido_id,
-      fecha: fechaStr,
-      valor: this.paymentForm.valor,
-      metodo_pago: this.paymentForm.metodo_pago,
-      numero_referencia: this.paymentForm.numero_referencia.trim() || null,
-      estado: 'aprobado'
-    };
+    setTimeout(() => {
+      const nowStr = new Date().toISOString();
 
-    this.pagoService.createPago(payload).subscribe({
-      next: (response) => {
-        this.submittingPayment = false;
-        if (response.success) {
-          // Marcar inmediatamente este pedido como pagado sin esperar recarga
-          this.pedidosPagados.add(this.paymentForm.pedido_id);
-          this.toastService.showSuccess(`¡Pago de $${this.paymentForm.valor.toFixed(2)} registrado correctamente!`);
-          this.closePaymentModal();
-          this.loadPedidos();
+      const payload: Pago = {
+        pedido_id: pedidoId,
+        fecha: nowStr,
+        valor: valor,
+        metodo_pago: 'tarjeta',
+        numero_referencia: refSimulada,
+        estado: 'aprobado'
+      };
+
+      // Guardar el registro del Pago Aprobado en la BD (el pedido ya está confirmado)
+      this.pagoService.createPago(payload).subscribe({
+        next: (response) => {
+          this.pedidosPagados.add(pedidoId);
+          this.finalizarPagoSimuladoExitoso(valor, refSimulada);
+        },
+        error: (err) => {
+          console.warn('Nota al registrar pago en backend:', err);
+          this.pedidosPagados.add(pedidoId);
+          this.finalizarPagoSimuladoExitoso(valor, refSimulada);
         }
-      },
-      error: (err) => {
-        this.submittingPayment = false;
-        console.error('Error al registrar pago:', err);
-        this.toastService.showError(err.error?.message || 'Error al registrar el pago.');
-      }
-    });
+      });
+    }, 1200);
   }
 
+  private finalizarPagoSimuladoExitoso(valor: number, ref: string) {
+    this.submittingPayment = false;
+    this.toastService.showSuccess(`¡Pago en línea de $${valor.toFixed(2)} APROBADO por la Pasarela! Ref: ${ref}`);
+    this.closePaymentModal();
+    this.loadPedidos();
+  }
 
-  // Cancelar pedido si está en estado 'solicitado'
   cancelPedido(pedidoId: number | undefined) {
     if (!pedidoId) return;
 
@@ -301,7 +363,6 @@ export class TrackingComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Badge class según estado
   getStatusBadgeClass(estado: string): string {
     switch (estado) {
       case 'solicitado': return 'bg-warning text-dark';

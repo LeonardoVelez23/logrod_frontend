@@ -28,7 +28,7 @@
       </div>
 
       <button *ngIf="puedeCrearPedidos" class="btn btn-primary create-order-btn" (click)="openCreateModal()" title="Registrar un nuevo pedido">
-        <i class="bi bi-plus-lg"></i> + Nuevo Pedido
+        <i class="bi bi-plus-lg me-1"></i> Nuevo Pedido
       </button>
 
       <button class="btn btn-secondary refresh-btn" [disabled]="isLoadingPedidos" (click)="loadPedidos()" title="Recargar pedidos">
@@ -486,7 +486,7 @@
             [class.selected]="selectedProductId === p.id"
             (click)="seleccionarProductoNuevoPedido(p)"
           >
-            <img *ngIf="p.imagen_url" [src]="p.imagen_url" [alt]="p.nombre" class="mini-product-image" />
+            <img *ngIf="p.imagen_url" [src]="p.imagen_url" [alt]="p.nombre" class="mini-product-image" loading="lazy" decoding="async" />
             <div *ngIf="!p.imagen_url" class="mini-product-image mini-product-image-empty">
               <i class="bi bi-image"></i>
             </div>
