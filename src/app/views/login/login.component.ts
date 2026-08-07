@@ -153,13 +153,13 @@ export class LoginComponent {
   onRegisterSubmit() {
     this.errorMessage.set(null);
 
-    if (this.registerData.identificacion.trim().length !== 10) {
-      this.errorMessage.set('La identificación debe tener exactamente 10 dígitos.');
+    if (!this.registerData.identificacion.trim() || this.registerData.identificacion.trim().length !== 10) {
+      this.errorMessage.set('La cédula/identificación es obligatoria y debe tener exactamente 10 números.');
       return;
     }
 
-    if (this.registerData.telefono.trim() && !this.telefonoValido(this.registerData.telefono.trim())) {
-      this.errorMessage.set('El teléfono debe tener 10 dígitos e iniciar en 0 (Ej. 0987654321).');
+    if (!this.registerData.telefono.trim() || !this.telefonoValido(this.registerData.telefono.trim())) {
+      this.errorMessage.set('El teléfono es obligatorio, debe tener 10 números e iniciar en 0 (Ej. 0987654321).');
       return;
     }
 

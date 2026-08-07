@@ -212,7 +212,7 @@
 
               <!-- Teléfono -->
               <div class="col-6 mb-2">
-                <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Teléfono</label>
+                <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Teléfono *</label>
                 <div class="input-group-custom">
                   <span class="input-icon material-symbols-outlined">call</span>
                   <input 
@@ -225,7 +225,8 @@
                     (keydown)="bloquearNoNumerico($event)"
                     inputmode="numeric"
                     minlength="10"
-                    maxlength="10">
+                    maxlength="10"
+                    required>
                 </div>
               </div>
 
