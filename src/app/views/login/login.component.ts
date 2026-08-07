@@ -128,9 +128,40 @@ export class LoginComponent {
     return pwd.length > 0 && confirm.length > 0 && pwd === confirm;
   }
 
+  // Filtra cualquier caracter no numérico y recorta a la longitud máxima
+  soloDigitos(value: string, maxLen: number): string {
+    return (value || '').replace(/\D/g, '').slice(0, maxLen);
+  }
+
+  // Bloquea la tecla antes de que se escriba si no es un dígito
+  bloquearNoNumerico(event: KeyboardEvent) {
+    const teclasPermitidas = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+    if (teclasPermitidas.includes(event.key) || event.ctrlKey || event.metaKey) {
+      return;
+    }
+    if (!/^\d$/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  // Valida que el teléfono tenga 10 dígitos e inicie en 0 (Ej. 0987654321)
+  private telefonoValido(telefono: string): boolean {
+    return /^0\d{9}$/.test(telefono);
+  }
+
   // Enviar formulario de registro de cliente al backend
   onRegisterSubmit() {
     this.errorMessage.set(null);
+
+    if (this.registerData.identificacion.trim().length !== 10) {
+      this.errorMessage.set('La identificación debe tener exactamente 10 dígitos.');
+      return;
+    }
+
+    if (this.registerData.telefono.trim() && !this.telefonoValido(this.registerData.telefono.trim())) {
+      this.errorMessage.set('El teléfono debe tener 10 dígitos e iniciar en 0 (Ej. 0987654321).');
+      return;
+    }
 
     // Validar fortaleza de la contraseña
     const passwordCheck = this.validatePassword(this.registerData.contrasenia);

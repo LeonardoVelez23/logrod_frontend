@@ -161,7 +161,12 @@
                     name="identificacion" 
                     class="form-control-custom" 
                     placeholder="13xxxxxx-x" 
-                    [(ngModel)]="registerData.identificacion" 
+                    [ngModel]="registerData.identificacion" 
+                    (ngModelChange)="registerData.identificacion = soloDigitos($event, 10)"
+                    (keydown)="bloquearNoNumerico($event)"
+                    inputmode="numeric"
+                    minlength="10"
+                    maxlength="10"
                     required>
                 </div>
               </div>
@@ -215,7 +220,12 @@
                     name="telefono" 
                     class="form-control-custom" 
                     placeholder="0987654321" 
-                    [(ngModel)]="registerData.telefono">
+                    [ngModel]="registerData.telefono"
+                    (ngModelChange)="registerData.telefono = soloDigitos($event, 10)"
+                    (keydown)="bloquearNoNumerico($event)"
+                    inputmode="numeric"
+                    minlength="10"
+                    maxlength="10">
                 </div>
               </div>
 
