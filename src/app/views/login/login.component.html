@@ -153,10 +153,11 @@
             <div class="row g-2">
               <!-- DNI -->
               <div class="col-12 mb-2">
-                <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Número de Identificación (Cédula/DNI)</label>
+                <label for="reg_identificacion" class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Número de Identificación (Cédula/DNI)</label>
                 <div class="input-group-custom">
                   <span class="input-icon material-symbols-outlined">badge</span>
                   <input 
+                    id="reg_identificacion"
                     type="text" 
                     name="identificacion" 
                     class="form-control-custom" 
@@ -173,8 +174,9 @@
 
               <!-- Nombres -->
               <div class="col-6 mb-2">
-                <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Nombres</label>
+                <label for="reg_nombres" class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Nombres</label>
                 <input 
+                  id="reg_nombres"
                   type="text" 
                   name="nombres" 
                   class="form-control-custom" 
@@ -185,8 +187,9 @@
 
               <!-- Apellidos -->
               <div class="col-6 mb-2">
-                <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Apellidos</label>
+                <label for="reg_apellidos" class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Apellidos</label>
                 <input 
+                  id="reg_apellidos"
                   type="text" 
                   name="apellidos" 
                   class="form-control-custom" 
@@ -197,10 +200,11 @@
 
               <!-- Correo -->
               <div class="col-12 mb-2">
-                <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Correo Institucional</label>
+                <label for="reg_correo" class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Correo Institucional</label>
                 <div class="input-group-custom">
                   <span class="input-icon material-symbols-outlined">mail</span>
                   <input 
+                    id="reg_correo"
                     type="email" 
                     name="correo_electronico" 
                     class="form-control-custom" 
@@ -212,10 +216,11 @@
 
               <!-- Teléfono -->
               <div class="col-6 mb-2">
-                <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Teléfono *</label>
+                <label for="reg_telefono" class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Teléfono *</label>
                 <div class="input-group-custom">
                   <span class="input-icon material-symbols-outlined">call</span>
                   <input 
+                    id="reg_telefono"
                     type="text" 
                     name="telefono" 
                     class="form-control-custom" 
@@ -232,10 +237,11 @@
 
               <!-- Tipo de Cliente -->
               <div class="col-6 mb-2">
-                <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Tipo de Cliente</label>
+                <label for="reg_tipo_cliente" class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Tipo de Cliente</label>
                 <div class="input-group-custom">
                   <span class="input-icon material-symbols-outlined">school</span>
                   <select 
+                    id="reg_tipo_cliente"
                     name="tipo_cliente" 
                     class="form-control-custom" 
                     [(ngModel)]="registerData.tipo_cliente" 
@@ -251,8 +257,9 @@
 
               <!-- Contraseña -->
               <div class="col-6 mb-2">
-                <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Contraseña</label>
+                <label for="reg_contrasenia" class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Contraseña</label>
                 <input 
+                  id="reg_contrasenia"
                   type="password" 
                   name="contrasenia" 
                   class="form-control-custom" 
@@ -263,8 +270,9 @@
 
               <!-- Confirmar -->
               <div class="col-6 mb-2">
-                <label class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Confirmar</label>
+                <label for="reg_confirmarContrasenia" class="form-label text-uppercase text-secondary fw-semibold fs-8 tracking-wider">Confirmar</label>
                 <input 
+                  id="reg_confirmarContrasenia"
                   type="password" 
                   name="confirmarContrasenia" 
                   class="form-control-custom" 
